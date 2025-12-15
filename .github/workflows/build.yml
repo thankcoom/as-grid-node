@@ -1,0 +1,89 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ "main" ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            arch: x64
+          - os: macos-13
+            platform: macos
+            arch: x86_64
+          - os: macos-14
+            platform: macos
+            arch: arm64
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        # Install create-dmg on macOS
+        if [ "$RUNNER_OS" == "macOS" ]; then
+          brew install create-dmg
+        fi
+      shell: bash
+
+    - name: Build Application
+      run: |
+        python build_pyinstaller.py --clean --dmg
+      shell: bash
+
+    - name: Upload Artifacts (Windows)
+      if: runner.os == 'Windows'
+      uses: actions/upload-artifact@v4
+      with:
+        name: AS_Grid_Trading_Bitget-Windows
+        path: dist/AS_Grid_Trading_Bitget
+
+    - name: Upload Artifacts (macOS)
+      if: runner.os == 'macOS'
+      uses: actions/upload-artifact@v4
+      with:
+        name: AS_Grid_Trading_Bitget-macOS-${{ matrix.arch }}
+        path: dist/*.dmg
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Zip Windows Artifact
+        run: |
+          cd artifacts/AS_Grid_Trading_Bitget-Windows
+          zip -r ../../AS_Grid_Trading_Bitget-Windows.zip .
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            AS_Grid_Trading_Bitget-Windows.zip
+            artifacts/**/*.dmg

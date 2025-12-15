@@ -28,7 +28,21 @@ BUILD_DIR = PROJECT_ROOT / "build"
 # 應用程式設定 - Bitget 版本
 APP_NAME = "AS_Grid_Trading_Bitget"
 ENTRY_POINT = PROJECT_ROOT / "gui" / "app.py"
-ICON_PATH = PROJECT_ROOT / "assets" / "icon.icns"  # 如果有的話
+
+# Icon 設定
+ICON_ICNS = PROJECT_ROOT / "assets" / "icon.icns"
+ICON_ICO = PROJECT_ROOT / "assets" / "icon.ico"
+
+
+def get_icon_path():
+    """根據平台獲取正確的圖示路徑"""
+    if sys.platform == "win32":
+        if ICON_ICO.exists():
+            return ICON_ICO
+    elif sys.platform == "darwin":
+        if ICON_ICNS.exists():
+            return ICON_ICNS
+    return None
 
 
 def clean():
@@ -202,8 +216,9 @@ def build_app():
     ]
 
     # 添加 icon（如果存在）
-    if ICON_PATH.exists():
-        cmd.extend(["--icon", str(ICON_PATH)])
+    icon_path = get_icon_path()
+    if icon_path:
+        cmd.extend(["--icon", str(icon_path)])
 
     # 添加隱藏導入
     for module in get_hidden_imports():
@@ -284,6 +299,7 @@ def create_dmg(app_path: Path):
     print("\n創建 DMG...")
 
     dmg_path = DIST_DIR / f"{APP_NAME}.dmg"
+    icon_path = get_icon_path()
 
     # 刪除舊的 DMG
     if dmg_path.exists():
@@ -293,7 +309,7 @@ def create_dmg(app_path: Path):
     cmd = [
         "create-dmg",
         "--volname", APP_NAME,
-        "--volicon", str(ICON_PATH) if ICON_PATH.exists() else "",
+        "--volicon", str(icon_path) if icon_path else "",
         "--window-pos", "200", "120",
         "--window-size", "600", "400",
         "--icon-size", "100",
@@ -306,7 +322,7 @@ def create_dmg(app_path: Path):
     ]
 
     # 移除空的 volicon 參數
-    if not ICON_PATH.exists():
+    if not icon_path:
         cmd = [c for c in cmd if c != "--volicon" and c != ""]
 
     print("  使用 create-dmg 製作專業安裝檔...")

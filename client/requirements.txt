@@ -1,0 +1,13 @@
+# AS Grid Trading Client - 依賴
+
+# 加密
+cryptography>=41.0.0
+
+# HTTP 請求
+aiohttp>=3.9.0
+
+# 交易所 API
+ccxt>=4.0.0
+
+# 終端美化
+rich>=13.0.0

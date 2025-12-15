@@ -1,0 +1,113 @@
+{
+  "exchange": "bitget",
+  "websocket_url": "wss://ws.bitget.com/v2/ws/public",
+  "private_ws_url": "wss://ws.bitget.com/v2/ws/private",
+  "sync_interval": 10.0,
+  "symbols": {
+    "BTCUSDT": {
+      "symbol": "BTCUSDT",
+      "ccxt_symbol": "BTC/USDT:USDT",
+      "enabled": false,
+      "take_profit_spacing": 0.003,
+      "grid_spacing": 0.006,
+      "initial_quantity": 0.001,
+      "leverage": 20,
+      "limit_multiplier": 5.0,
+      "threshold_multiplier": 14.0
+    },
+    "ETHUSDT": {
+      "symbol": "ETHUSDT",
+      "ccxt_symbol": "ETH/USDT:USDT",
+      "enabled": false,
+      "take_profit_spacing": 0.004,
+      "grid_spacing": 0.008,
+      "initial_quantity": 0.01,
+      "leverage": 20,
+      "limit_multiplier": 5.0,
+      "threshold_multiplier": 14.0
+    },
+    "XRPUSDT": {
+      "symbol": "XRPUSDT",
+      "ccxt_symbol": "XRP/USDT:USDT",
+      "enabled": false,
+      "take_profit_spacing": 0.004,
+      "grid_spacing": 0.01,
+      "initial_quantity": 30.0,
+      "leverage": 20,
+      "limit_multiplier": 5.0,
+      "threshold_multiplier": 14.0
+    },
+    "DOGEUSDT": {
+      "symbol": "DOGEUSDT",
+      "ccxt_symbol": "DOGE/USDT:USDT",
+      "enabled": true,
+      "take_profit_spacing": 0.006,
+      "grid_spacing": 0.012,
+      "initial_quantity": 40.0,
+      "leverage": 20,
+      "limit_multiplier": 5.0,
+      "threshold_multiplier": 20.0
+    }
+  },
+  "risk": {
+    "enabled": true,
+    "margin_threshold": 0.4,
+    "trailing_start_profit": 5.0,
+    "trailing_drawdown_pct": 0.05,
+    "trailing_min_drawdown": 1.0
+  },
+  "max_enhancement": {
+    "all_enhancements_enabled": false,
+    "funding_rate_enabled": true,
+    "funding_rate_threshold": 0.0001,
+    "funding_rate_position_bias": 0.2,
+    "glft_enabled": true,
+    "gamma": 0.05,
+    "inventory_target": 0.5,
+    "dynamic_grid_enabled": false,
+    "atr_period": 14,
+    "atr_multiplier": 1.5,
+    "min_spacing": 0.002,
+    "max_spacing": 0.015,
+    "volatility_lookback": 100
+  },
+  "bandit": {
+    "enabled": false,
+    "window_size": 50,
+    "exploration_factor": 1.5,
+    "min_pulls_per_arm": 3,
+    "update_interval": 10,
+    "cold_start_enabled": true,
+    "cold_start_arm_idx": 4,
+    "contextual_enabled": true,
+    "volatility_lookback": 20,
+    "trend_lookback": 50,
+    "high_volatility_threshold": 0.02,
+    "trend_threshold": 0.01,
+    "thompson_enabled": true,
+    "thompson_prior_alpha": 1.0,
+    "thompson_prior_beta": 1.0,
+    "param_perturbation": 0.1,
+    "mdd_penalty_weight": 0.5,
+    "win_rate_bonus": 0.2
+  },
+  "dgt": {
+    "enabled": false,
+    "reset_threshold": 0.05,
+    "profit_reinvest_ratio": 0.5,
+    "boundary_buffer": 0.02
+  },
+  "leading_indicator": {
+    "enabled": true,
+    "ofi_enabled": true,
+    "ofi_lookback": 20,
+    "ofi_threshold": 0.6,
+    "volume_enabled": true,
+    "volume_lookback": 50,
+    "volume_surge_threshold": 2.0,
+    "spread_enabled": true,
+    "spread_lookback": 30,
+    "spread_surge_threshold": 1.5,
+    "min_signals_for_action": 2
+  }
+}

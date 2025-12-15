@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+build/
+dist/
+.DS_Store
+.idea/
+.vscode/
+*.log
+log/
+as_grid.db
+*.spec
+!AS_Grid_Trading_Bitget.spec
+asBack/data/
+asBack/output/

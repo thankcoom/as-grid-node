@@ -1,0 +1,35 @@
+{
+  "websocket_url": "wss://ws.bitget.com/v2/ws/public",
+  "sync_interval": 10.0,
+  "symbols": {
+    "XRPUSDC": {
+      "symbol": "XRPUSDC",
+      "ccxt_symbol": "XRP/USDC:USDC",
+      "enabled": true,
+      "take_profit_spacing": 0.005,
+      "grid_spacing": 0.006,
+      "initial_quantity": 30.0,
+      "leverage": 20,
+      "position_threshold": 500,
+      "position_limit": 100
+    },
+    "DOGEUSDC": {
+      "symbol": "DOGEUSDC",
+      "ccxt_symbol": "DOGE/USDC:USDC",
+      "enabled": true,
+      "take_profit_spacing": 0.005,
+      "grid_spacing": 0.006,
+      "initial_quantity": 400.0,
+      "leverage": 20,
+      "position_threshold": 4000.0,
+      "position_limit": 2000.0
+    }
+  },
+  "risk": {
+    "enabled": true,
+    "margin_threshold": 0.5,
+    "trailing_start_profit": 5.0,
+    "trailing_drawdown_pct": 0.1,
+    "trailing_min_drawdown": 2.0
+  }
+}

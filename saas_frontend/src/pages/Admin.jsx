@@ -13,11 +13,15 @@ export default function Admin() {
     const [pendingUsers, setPendingUsers] = useState([]);
     const [groups, setGroups] = useState([]);
     const [whitelist, setWhitelist] = useState([]);
+    const [users, setUsers] = useState([]);  // Add users state
     const [refresh, setRefresh] = useState(false);
 
     // Modal states
     const [showAddUid, setShowAddUid] = useState(false);
     const [showAddGroup, setShowAddGroup] = useState(false);
+    const [showAssignGroup, setShowAssignGroup] = useState(false); // Add assign group modal state
+    const [selectedUser, setSelectedUser] = useState(null); // Add selected user state
+    const [selectedGroupId, setSelectedGroupId] = useState(''); // Add selected group id state
     const [newUid, setNewUid] = useState('');
     const [newUidEmail, setNewUidEmail] = useState('');
     const [newGroupName, setNewGroupName] = useState('');
@@ -30,16 +34,18 @@ export default function Admin() {
 
     const fetchData = async () => {
         try {
-            const [statsRes, usersRes, groupsRes, whitelistRes] = await Promise.all([
+            const [statsRes, usersRes, groupsRes, whitelistRes, allUsersRes] = await Promise.all([
                 api.get('/admin/stats'),
                 api.get('/admin/users?status=pending_approval'),
                 api.get('/admin/groups'),
-                api.get('/admin/whitelist')
+                api.get('/admin/whitelist'),
+                api.get('/admin/users') // Fetch all users
             ]);
             setStats(statsRes.data);
             setPendingUsers(usersRes.data);
             setGroups(groupsRes.data);
             setWhitelist(whitelistRes.data);
+            setUsers(allUsersRes.data); // Set all users
         } catch (err) {
             console.error(err);
             if (err.response?.status === 401) navigate('/login');
@@ -89,6 +95,38 @@ export default function Admin() {
             setShowAddGroup(false);
             setNewGroupName('');
             setNewGroupDesc('');
+            setRefresh(!refresh);
+        } catch (err) {
+            alert(t.common.error + ': ' + (err.response?.data?.detail || err.message));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteGroup = async (groupId) => {
+        if (!window.confirm(t.common.confirm + ' ' + t.common.delete + '?')) return;
+        try {
+            await api.delete(`/admin/groups/${groupId}`);
+            setRefresh(!refresh);
+        } catch (err) {
+            alert(t.common.error + ': ' + (err.response?.data?.detail || err.message));
+        }
+    };
+
+    const openAssignGroup = (user) => {
+        setSelectedUser(user);
+        setSelectedGroupId(user.group_id || '');
+        setShowAssignGroup(true);
+    };
+
+    const handleAssignGroup = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            await api.post(`/admin/users/${selectedUser.id}/group?group_id=${selectedGroupId}`);
+            setShowAssignGroup(false);
+            setSelectedUser(null);
+            setSelectedGroupId('');
             setRefresh(!refresh);
         } catch (err) {
             alert(t.common.error + ': ' + (err.response?.data?.detail || err.message));
@@ -344,10 +382,98 @@ export default function Admin() {
                         </div>
                     )}
 
-                    {/* Placeholder for other tabs if needed */}
-                    {(activeTab === 'users' || activeTab === 'groups') && (
+                    {/* Default placeholder for unknown tabs */}
+                    {(activeTab === 'dashboard') && (
                         <div className="flex items-center justify-center py-20 text-white/20">
-                            Tab content placeholder for {activeTab}
+                            Dashboard content
+                        </div>
+                    )}
+
+                    {activeTab === 'users' && (
+                        <div className="space-y-6">
+                            <h2 className="text-xl font-bold text-white mb-2">{t.admin.users}</h2>
+                            <div className="glass-card rounded-2xl overflow-hidden">
+                                <table className="w-full text-left">
+                                    <thead className="bg-white/5 text-white/40 text-xs uppercase">
+                                        <tr>
+                                            <th className="px-6 py-4 font-medium">{t.auth.email}</th>
+                                            <th className="px-6 py-4 font-medium">UID</th>
+                                            <th className="px-6 py-4 font-medium">{t.common.status}</th>
+                                            <th className="px-6 py-4 font-medium">{t.admin.groups}</th>
+                                            <th className="px-6 py-4 font-medium">{t.common.action}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5">
+                                        {users.map((user) => (
+                                            <tr key={user.id} className="text-sm text-white hover:bg-white/5 transition-colors">
+                                                <td className="px-6 py-4">
+                                                    <div>{user.email}</div>
+                                                    <div className="text-xs text-white/30">{new Date(user.created_at).toLocaleDateString()}</div>
+                                                </td>
+                                                <td className="px-6 py-4 font-mono">{user.exchange_uid || '-'}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`px-2 py-1 rounded text-[10px] font-bold ${user.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' :
+                                                            user.status === 'pending_approval' ? 'bg-amber-500/10 text-amber-400' :
+                                                                'bg-red-500/10 text-red-400'
+                                                        }`}>
+                                                        {user.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-white/60">
+                                                    {user.group_name || '-'}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <button
+                                                        onClick={() => openAssignGroup(user)}
+                                                        className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                                                    >
+                                                        {t.admin.assignGroup || 'Assign Group'}
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'groups' && (
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-xl font-bold text-white mb-2">{t.admin.groups}</h2>
+                                <button
+                                    onClick={() => setShowAddGroup(true)}
+                                    className="px-4 py-2 bg-white text-black rounded-xl text-sm font-bold hover:bg-white/90 transition-all flex items-center gap-2"
+                                >
+                                    <span>+</span> {t.admin.addGroup || 'Add Group'}
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {groups.map((group) => (
+                                    <div key={group.id} className="glass-card rounded-2xl p-6 relative group">
+                                        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={() => handleDeleteGroup(group.id)}
+                                                className="text-red-400 hover:text-red-300"
+                                                title={t.common.delete}
+                                            >
+                                                <Icons.X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                        <div className="mb-4">
+                                            <h3 className="text-lg font-bold text-white">{group.name}</h3>
+                                            <p className="text-sm text-white/40">{group.description || 'No description'}</p>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs text-white/30 border-t border-white/5 pt-4">
+                                            <span>{new Date(group.created_at).toLocaleDateString()}</span>
+                                            <span className="flex items-center gap-1">
+                                                <Icons.Users className="w-3 h-3" /> {group.user_count} users
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -394,6 +520,94 @@ export default function Admin() {
                                     className="flex-1 py-3 bg-white text-black rounded-xl text-xs font-bold hover:bg-white/90"
                                 >
                                     {loading ? t.admin.adding : t.admin.addUid}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {showAddGroup && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+                        <h3 className="text-lg font-bold text-white mb-4">{t.admin.addGroup || 'Create Group'}</h3>
+                        <form onSubmit={handleCreateGroup} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-medium text-white/40 mb-2 uppercase">{t.common.name}</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={newGroupName}
+                                    onChange={e => setNewGroupName(e.target.value)}
+                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20"
+                                    placeholder="e.g. Premium Users"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-white/40 mb-2 uppercase">{t.common.description}</label>
+                                <textarea
+                                    value={newGroupDesc}
+                                    onChange={e => setNewGroupDesc(e.target.value)}
+                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20 min-h-[100px]"
+                                    placeholder="Group description..."
+                                />
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAddGroup(false)}
+                                    className="flex-1 py-3 bg-white/5 text-white rounded-xl text-xs font-bold hover:bg-white/10"
+                                >
+                                    {t.common.cancel}
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="flex-1 py-3 bg-white text-black rounded-xl text-xs font-bold hover:bg-white/90"
+                                >
+                                    {loading ? t.common.saving : t.common.save}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {showAssignGroup && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+                        <h3 className="text-lg font-bold text-white mb-4">{t.admin.assignGroup || 'Assign Group'}</h3>
+                        <div className="mb-4 text-sm text-white/60">
+                            User: <span className="text-white">{selectedUser?.email}</span>
+                        </div>
+                        <form onSubmit={handleAssignGroup} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-medium text-white/40 mb-2 uppercase">{t.admin.group}</label>
+                                <select
+                                    value={selectedGroupId}
+                                    onChange={e => setSelectedGroupId(e.target.value)}
+                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20"
+                                >
+                                    <option value="">No Group</option>
+                                    {groups.map(g => (
+                                        <option key={g.id} value={g.id}>{g.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAssignGroup(false)}
+                                    className="flex-1 py-3 bg-white/5 text-white rounded-xl text-xs font-bold hover:bg-white/10"
+                                >
+                                    {t.common.cancel}
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="flex-1 py-3 bg-white text-black rounded-xl text-xs font-bold hover:bg-white/90"
+                                >
+                                    {loading ? t.common.saving : t.common.save}
                                 </button>
                             </div>
                         </form>

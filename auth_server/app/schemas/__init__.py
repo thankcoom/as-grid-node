@@ -60,6 +60,13 @@ class AdminUser(BaseModel):
     class Config:
         from_attributes = True
 
+class AdminUserUpdate(BaseModel):
+    """Schema for admin updating user"""
+    email: Optional[EmailStr] = None
+    exchange_uid: Optional[str] = None
+    status: Optional[str] = None
+    group_id: Optional[str] = None
+
 class PendingUser(BaseModel):
     id: str
     email: EmailStr

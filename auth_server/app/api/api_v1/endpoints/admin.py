@@ -145,27 +145,76 @@ def reject_user(
     return {"message": "User rejected", "email": user.email}
 
 
-@router.post("/users/{user_id}/group")
-def assign_user_to_group(
+    return {"message": "User group updated", "group_id": group_id}
+
+
+@router.delete("/users/{user_id}")
+def delete_user(
     user_id: str,
-    group_id: str,
     db: Session = Depends(deps.get_db),
     admin: models.User = Depends(get_admin_user)
 ):
-    """分配用戶到群組"""
+    """刪除用戶（管理員功能）"""
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    if group_id:
-        group = db.query(models.Group).filter(models.Group.id == group_id).first()
-        if not group:
-            raise HTTPException(status_code=404, detail="Group not found")
+    # 這裡可以添加更多關聯數據的刪除邏輯，如果不是 Cascading Delete
+    # 目前假設 SQLAlchemy model 設定了 cascade="all, delete" 或數據庫層級有設定
     
-    user.group_id = group_id if group_id else None
+    db.delete(user)
     db.commit()
     
-    return {"message": "User group updated", "group_id": group_id}
+    return {"message": "User deleted", "email": user.email}
+
+
+@router.put("/users/{user_id}")
+def update_user(
+    user_id: str,
+    user_in: schemas.AdminUserUpdate,
+    db: Session = Depends(deps.get_db),
+    admin: models.User = Depends(get_admin_user)
+):
+    """更新用戶資料（管理員功能）"""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user_in.email:
+        # Check uniqueness
+        existing = db.query(models.User).filter(models.User.email == user_in.email).first()
+        if existing and existing.id != user_id:
+             raise HTTPException(status_code=400, detail="Email already registered")
+        user.email = user_in.email
+        
+    if user_in.exchange_uid:
+        # Check uniqueness
+        if user_in.exchange_uid != user.exchange_uid:
+             existing = db.query(models.User).filter(models.User.exchange_uid == user_in.exchange_uid).first()
+             if existing and existing.id != user_id:
+                 raise HTTPException(status_code=400, detail="UID already linked to another user")
+        user.exchange_uid = user_in.exchange_uid
+        
+    if user_in.status:
+        user.status = user_in.status
+        if user.status == "active" and not user.approved_at:
+             user.approved_at = datetime.utcnow()
+             user.approved_by = admin.id
+             
+    if user_in.group_id is not None:
+         # Allow setting to None (empty string case handled by frontend sending null/None)
+         if user_in.group_id:
+             group = db.query(models.Group).filter(models.Group.id == user_in.group_id).first()
+             if not group:
+                 raise HTTPException(status_code=404, detail="Group not found")
+             user.group_id = user_in.group_id
+         else:
+             user.group_id = None
+    
+    db.commit()
+    db.refresh(user)
+    
+    return {"message": "User updated", "id": user.id}
 
 
 # ═══════════════════════════════════════════════════════════════════════════

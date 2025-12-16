@@ -734,7 +734,7 @@ class TradingEngine:
     def _load_config(self):
         """載入配置"""
         try:
-            from as_terminal_max_bitget import GlobalConfig
+            from trading_core.models import GlobalConfig
             self.config = GlobalConfig.load()
             self._log("✓ 配置載入成功")
 
@@ -814,7 +814,7 @@ class TradingEngine:
             return False
 
         try:
-            from as_terminal_max_bitget import SymbolConfig
+            from trading_core.models import SymbolConfig
 
             # 建立 CCXT 格式
             base = symbol.replace("USDC", "").replace("USDT", "")
@@ -1151,7 +1151,7 @@ class TradingEngine:
     async def _run_bot(self):
         """運行 MaxGridBot (Bitget)"""
         try:
-            from as_terminal_max_bitget import MaxGridBot
+            from trading_core.bot import MaxGridBot
 
             self._log("正在初始化 Bitget 交易機器人...")
 
@@ -1531,7 +1531,8 @@ class TradingEngine:
             回測結果
         """
         try:
-            from as_terminal_max_bitget import BacktestManager, GridStrategy
+            from trading_core.backtest import BacktestManager
+            from trading_core.strategy import GridStrategy
 
             self._log(f"開始回測: {symbol} ({start_date} ~ {end_date})")
 
@@ -1582,7 +1583,7 @@ class TradingEngine:
             優化結果列表（按收益排序）
         """
         try:
-            from as_terminal_max_bitget import BacktestManager
+            from trading_core.backtest import BacktestManager
 
             self._log(f"開始參數優化: {symbol}")
 

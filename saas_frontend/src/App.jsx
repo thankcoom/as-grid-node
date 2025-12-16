@@ -12,6 +12,9 @@ import Dashboard from './pages/Dashboard';
 import Settings from './pages/Settings';
 import Admin from './pages/Admin';
 import Deploy from './pages/Deploy';
+import CoinSelection from './pages/CoinSelection';
+import Symbols from './pages/Symbols';
+import Backtest from './pages/Backtest';
 
 // Protected Route - requires login and active status
 const ProtectedRoute = ({ children }) => {
@@ -106,6 +109,23 @@ function App() {
               </ProtectedRoute>
             } />
 
+            {/* Trading Feature Routes */}
+            <Route path="/coins" element={
+              <ProtectedRoute>
+                <CoinSelection />
+              </ProtectedRoute>
+            } />
+            <Route path="/symbols" element={
+              <ProtectedRoute>
+                <Symbols />
+              </ProtectedRoute>
+            } />
+            <Route path="/backtest" element={
+              <ProtectedRoute>
+                <Backtest />
+              </ProtectedRoute>
+            } />
+
             {/* Admin Routes */}
             <Route path="/admin" element={
               <AdminRoute>
@@ -124,3 +144,4 @@ function App() {
 }
 
 export default App;
+

@@ -14,6 +14,9 @@ export default function Admin() {
     const [groups, setGroups] = useState([]);
     const [whitelist, setWhitelist] = useState([]);
     const [users, setUsers] = useState([]);  // Add users state
+    const [totalUsers, setTotalUsers] = useState(0); // Add total users state
+    const [page, setPage] = useState(1);
+    const [pageSize] = useState(20);
     const [refresh, setRefresh] = useState(false);
 
     // Modal states
@@ -52,24 +55,48 @@ export default function Admin() {
 
     useEffect(() => {
         fetchData();
-    }, [refresh]);
+    }, [refresh, page]);
 
     const fetchData = async () => {
         try {
+            // Calculate skip/limit for users
+            const skip = (page - 1) * pageSize;
+
             const [statsRes, usersRes, groupsRes, whitelistRes, allUsersRes] = await Promise.all([
                 api.get('/admin/stats'),
                 api.get('/admin/users?status=pending_approval'),
                 api.get('/admin/groups'),
                 api.get('/admin/whitelist'),
-                api.get('/admin/users') // Fetch all users
+                api.get(`/admin/users?skip=${skip}&limit=${pageSize}`) // Fetch users with pagination
             ]);
             setStats(statsRes.data);
-            setPendingUsers(usersRes.data);
+            // Handle pendingUsers - can be array (legacy) or paginated object
+            if (Array.isArray(usersRes.data)) {
+                setPendingUsers(usersRes.data);
+            } else {
+                setPendingUsers(usersRes.data.items || []);
+            }
             setGroups(groupsRes.data);
             setWhitelist(whitelistRes.data);
-            setUsers(allUsersRes.data); // Set all users
+
+            // Debug: log what backend returns
+            console.log('allUsersRes.data:', allUsersRes.data);
+
+            // Handle both array (legacy) and paginated object responses
+            if (Array.isArray(allUsersRes.data)) {
+                setUsers(allUsersRes.data);
+                setTotalUsers(allUsersRes.data.length);
+            } else if (allUsersRes.data && allUsersRes.data.items) {
+                setUsers(allUsersRes.data.items);
+                setTotalUsers(allUsersRes.data.total || 0);
+            } else {
+                // Fallback: empty array
+                console.warn('Unexpected users response format:', allUsersRes.data);
+                setUsers([]);
+                setTotalUsers(0);
+            }
         } catch (err) {
-            console.error(err);
+            console.error('fetchData error:', err);
             alert("Fetch Data Error: " + (err.response?.data?.detail || err.message));
             if (err.response?.status === 401) navigate('/login');
         }
@@ -466,53 +493,87 @@ export default function Admin() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/5">
-                                        {users.map((user) => (
-                                            <tr key={user.id} className="text-sm text-white hover:bg-white/5 transition-colors">
-                                                <td className="px-6 py-4">
-                                                    <div>{user.email}</div>
-                                                    <div className="text-xs text-white/30">{new Date(user.created_at).toLocaleDateString()}</div>
-                                                </td>
-                                                <td className="px-6 py-4 font-mono">{user.exchange_uid || '-'}</td>
-                                                <td className="px-6 py-4">
-                                                    <span className={`px-2 py-1 rounded text-[10px] font-bold ${user.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' :
-                                                        user.status === 'pending_approval' ? 'bg-amber-500/10 text-amber-400' :
-                                                            'bg-red-500/10 text-red-400'
-                                                        }`}>
-                                                        {user.status}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 text-white/60">
-                                                    {user.group_name || '-'}
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex gap-2">
-                                                        <button
-                                                            onClick={() => openAssignGroup(user)}
-                                                            className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-                                                            title={t.admin.assignGroup}
-                                                        >
-                                                            <Icons.Users className="w-4 h-4" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => openEditUser(user)}
-                                                            className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
-                                                            title="Edit User"
-                                                        >
-                                                            <Icons.Edit className="w-4 h-4" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteUser(user)}
-                                                            className="text-xs text-red-400 hover:text-red-300 transition-colors"
-                                                            title="Delete User"
-                                                        >
-                                                            <Icons.Trash className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
+                                        {users.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="5" className="px-6 py-12 text-center text-white/20">
+                                                    No users found
                                                 </td>
                                             </tr>
-                                        ))}
+                                        ) : (
+                                            users.map((user) => (
+                                                <tr key={user.id} className="text-sm text-white hover:bg-white/5 transition-colors">
+                                                    <td className="px-6 py-4">
+                                                        <div>{user.email}</div>
+                                                        <div className="text-xs text-white/30">{user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 font-mono">{user.exchange_uid || '-'}</td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`px-2 py-1 rounded text-[10px] font-bold ${user.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' :
+                                                            user.status === 'pending_approval' ? 'bg-amber-500/10 text-amber-400' :
+                                                                'bg-red-500/10 text-red-400'
+                                                            }`}>
+                                                            {user.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-white/60">
+                                                        {user.group_name || '-'}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => openAssignGroup(user)}
+                                                                className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                                                                title={t.admin.assignGroup}
+                                                            >
+                                                                <Icons.Users className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => openEditUser(user)}
+                                                                className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+                                                                title="Edit User"
+                                                            >
+                                                                <Icons.Edit className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteUser(user)}
+                                                                className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                                                                title="Delete User"
+                                                            >
+                                                                <Icons.Trash className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
                                     </tbody>
                                 </table>
+
+                                {/* Pagination Controls */}
+                                <div className="px-6 py-4 border-t border-white/5 flex items-center justify-between">
+                                    <div className="text-xs text-white/40">
+                                        Showing {Math.min(pageSize, users.length)} of {totalUsers} users
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                                            disabled={page === 1}
+                                            className="px-3 py-1.5 rounded-lg bg-white/5 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition-colors text-xs"
+                                        >
+                                            Prev
+                                        </button>
+                                        <div className="px-3 py-1.5 text-xs text-white font-mono">
+                                            Page {page}
+                                        </div>
+                                        <button
+                                            onClick={() => setPage(p => p + 1)}
+                                            disabled={page * pageSize >= totalUsers}
+                                            className="px-3 py-1.5 rounded-lg bg-white/5 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition-colors text-xs"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}

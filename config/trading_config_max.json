@@ -29,18 +29,18 @@
     "XRPUSDT": {
       "symbol": "XRPUSDT",
       "ccxt_symbol": "XRP/USDT:USDT",
-      "enabled": false,
-      "take_profit_spacing": 0.004,
-      "grid_spacing": 0.01,
-      "initial_quantity": 30.0,
-      "leverage": 20,
-      "limit_multiplier": 5.0,
-      "threshold_multiplier": 14.0
+      "enabled": true,
+      "take_profit_spacing": 4e-05,
+      "grid_spacing": 0.0001,
+      "initial_quantity": 3.0,
+      "leverage": 50,
+      "limit_multiplier": 20.0,
+      "threshold_multiplier": 80.0
     },
     "DOGEUSDT": {
       "symbol": "DOGEUSDT",
       "ccxt_symbol": "DOGE/USDT:USDT",
-      "enabled": true,
+      "enabled": false,
       "take_profit_spacing": 0.006,
       "grid_spacing": 0.012,
       "initial_quantity": 40.0,

@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     # Generate a secure one with: cryptography.fernet.Fernet.generate_key().decode()
     ENCRYPTION_KEY: str = "INSECURE-DEFAULT-ENCRYPTION-KEY-CHANGE-THIS-IN-PRODUCTION=="
 
+    # Default Node Secret for proxy layer
+    DEFAULT_NODE_SECRET: str = "default-node-secret"
+
     class Config:
         case_sensitive = True
         env_file = ".env"

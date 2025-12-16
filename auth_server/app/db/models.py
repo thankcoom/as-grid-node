@@ -118,3 +118,36 @@ class UserAgreement(Base):
     ip_address = Column(String, nullable=True)
 
     user = relationship("User", back_populates="agreements")
+
+
+class NodeStatus(Base):
+    """用戶 Grid Node 狀態追蹤"""
+    __tablename__ = "node_status"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey("users.id"), unique=True)
+    
+    # 連接狀態
+    is_online = Column(Boolean, default=False)
+    is_trading = Column(Boolean, default=False)
+    last_heartbeat = Column(DateTime, nullable=True)
+    
+    # 交易數據
+    total_pnl = Column(Float, default=0.0)
+    unrealized_pnl = Column(Float, default=0.0)
+    equity = Column(Float, default=0.0)
+    
+    # 持倉資訊 (JSON)
+    positions = Column(Text, nullable=True)
+    symbols = Column(Text, nullable=True)
+    
+    # Node 資訊
+    node_version = Column(String, nullable=True)
+    node_url = Column(String, nullable=True)
+    
+    # 時間戳
+    registered_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", backref="node_status")
+

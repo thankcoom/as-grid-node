@@ -46,8 +46,8 @@ def get_icon_path():
 
 
 def clean():
-    """清理舊的打包檔案"""
-    print("清理舊檔案...")
+    """Clean old build files"""
+    print("Cleaning old files...")
 
     dirs_to_clean = [
         DIST_DIR,
@@ -59,10 +59,10 @@ def clean():
         if path.exists():
             if path.is_dir():
                 shutil.rmtree(path)
-                print(f"  已刪除目錄: {path}")
+                print(f"  Deleted dir: {path}")
             else:
                 path.unlink()
-                print(f"  已刪除檔案: {path}")
+                print(f"  Deleted file: {path}")
 
 
 def get_hidden_imports():
@@ -194,24 +194,24 @@ def get_data_files():
 
 
 def build_app():
-    """使用 PyInstaller 打包"""
-    print(f"\n開始打包 {APP_NAME}...")
-    print(f"入口點: {ENTRY_POINT}")
+    """Build using PyInstaller"""
+    print(f"\nStarting build for {APP_NAME}...")
+    print(f"Entry point: {ENTRY_POINT}")
 
-    # 確保入口點存在
+    # Ensure entry point exists
     if not ENTRY_POINT.exists():
-        print(f"錯誤: 找不到入口點 {ENTRY_POINT}")
+        print(f"Error: Entry point not found {ENTRY_POINT}")
         sys.exit(1)
 
-    # 構建 PyInstaller 命令
+    # Build PyInstaller command
     cmd = [
         sys.executable, "-m", "PyInstaller",
         "--name", APP_NAME,
-        "--windowed",  # macOS .app bundle / Windows 無控制台
-        "--noconfirm",  # 不詢問覆蓋
-        "--clean",  # 清理快取
+        "--windowed",  # macOS .app bundle / Windows no console
+        "--noconfirm",
+        "--clean",
 
-        # macOS 特定 - Bitget 版本
+        # macOS specific - Bitget version
         "--osx-bundle-identifier", "com.louislab.asgrid.bitget",
     ]
 
@@ -242,19 +242,19 @@ def build_app():
     # 入口點
     cmd.append(str(ENTRY_POINT))
 
-    print("\n執行命令:")
+    print("\nExecuting command:")
     print(" ".join(cmd[:10]) + " ...")
 
-    # 執行打包
+    # Execute build
     result = subprocess.run(cmd, cwd=str(PROJECT_ROOT))
 
     if result.returncode != 0:
-        print("\n打包失敗!")
+        print("\nBuild Failed!")
         sys.exit(1)
 
-    print("\n打包成功!")
+    print("\nBuild Success!")
 
-    # 複製 asBack 到 Frameworks（macOS）
+    # Copy asBack to Frameworks (macOS)
     app_path = DIST_DIR / f"{APP_NAME}.app"
     if app_path.exists():
         copy_asback_to_app(app_path)

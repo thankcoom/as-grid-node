@@ -217,7 +217,7 @@ const translations = {
             sysAdmin: 'System Admin'
         },
         footer: {
-            rights: '© 2024 Louis AS Grid. All rights reserved.'
+            rights: '© 2025 Louis AS Grid. All rights reserved.'
         },
         status: {
             active: 'Active',
@@ -468,7 +468,7 @@ const translations = {
             sysAdmin: '系統管理員'
         },
         footer: {
-            rights: '© 2024 Louis AS Grid. 保留所有權利。'
+            rights: '© 2025 Louis AS Grid. All rights reserved.'
         },
         status: {
             active: '已啟用',

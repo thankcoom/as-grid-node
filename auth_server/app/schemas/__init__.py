@@ -1,6 +1,7 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional, List
 from datetime import datetime
+import re
 
 # --- Token ---
 class Token(BaseModel):
@@ -15,6 +16,17 @@ class TokenData(BaseModel):
 class UserRegister(BaseModel):
     email: EmailStr
     password: str
+    
+    @field_validator('password')
+    @classmethod
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError('密碼至少需要 8 個字符')
+        if not re.search(r'[A-Z]', v):
+            raise ValueError('密碼需要包含至少一個大寫字母')
+        if not re.search(r'[0-9]', v):
+            raise ValueError('密碼需要包含至少一個數字')
+        return v
 
 # --- User (for responses) ---
 class UserBase(BaseModel):
@@ -59,6 +71,14 @@ class AdminUser(BaseModel):
 
     class Config:
         from_attributes = True
+
+class PaginatedUsers(BaseModel):
+    items: List[AdminUser]
+    total: int
+
+class WhitelistAdd(BaseModel):
+    uid: str
+    email: Optional[EmailStr] = None
 
 class AdminUserUpdate(BaseModel):
     """Schema for admin updating user"""

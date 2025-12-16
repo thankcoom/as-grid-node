@@ -155,7 +155,7 @@ export default function Login() {
 
       {/* Version */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-text-disabled/50">
-        © 2024 Louis AS Grid • {t.brand.tagline}
+        © 2025 Louis AS Grid • {t.brand.tagline}
       </div>
     </div>
   );

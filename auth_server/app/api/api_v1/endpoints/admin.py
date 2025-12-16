@@ -53,14 +53,16 @@ def get_admin_stats(
 # User Management
 # ═══════════════════════════════════════════════════════════════════════════
 
-@router.get("/users", response_model=List[schemas.AdminUser])
+@router.get("/users", response_model=schemas.PaginatedUsers)
 def get_all_users(
+    skip: int = 0,
+    limit: int = 20,
     status: str = None,
     group_id: str = None,
     db: Session = Depends(deps.get_db),
     admin: models.User = Depends(get_admin_user)
 ):
-    """獲取所有用戶列表"""
+    """獲取分頁用戶列表"""
     query = db.query(models.User)
     
     if status:
@@ -68,10 +70,14 @@ def get_all_users(
     if group_id:
         query = query.filter(models.User.group_id == group_id)
     
-    users = query.order_by(models.User.created_at.desc()).all()
+    # 計算總數
+    total = query.count()
     
-    # 添加 group_name
-    result = []
+    # 應用分頁
+    users = query.order_by(models.User.created_at.desc()).offset(skip).limit(limit).all()
+    
+    # 轉換數據
+    items = []
     for user in users:
         user_dict = {
             "id": user.id,
@@ -88,9 +94,9 @@ def get_all_users(
             "approved_at": user.approved_at,
             "created_at": user.created_at
         }
-        result.append(schemas.AdminUser(**user_dict))
+        items.append(schemas.AdminUser(**user_dict))
     
-    return result
+    return {"items": items, "total": total}
 
 
 @router.get("/users/pending", response_model=List[schemas.PendingUser])
@@ -383,8 +389,7 @@ def get_group_users(
 
 @router.post("/whitelist")
 def add_uid_to_whitelist(
-    uid: str,
-    email: str = None,
+    whitelist_in: schemas.WhitelistAdd,
     db: Session = Depends(deps.get_db),
     admin: models.User = Depends(get_admin_user)
 ):
@@ -393,6 +398,9 @@ def add_uid_to_whitelist(
     - 如果 UID 已存在用戶，將其狀態設為 active
     - 如果 UID 不存在，創建預審核記錄（InviteCode 表）
     """
+    uid = whitelist_in.uid
+    email = whitelist_in.email
+    
     # 檢查是否已有此 UID 的用戶
     existing_user = db.query(models.User).filter(models.User.exchange_uid == uid).first()
     

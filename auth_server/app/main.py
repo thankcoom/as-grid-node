@@ -24,7 +24,7 @@ origins = [
     "http://localhost:5173",      # Local dev
     "http://localhost:5174",      # Alternative local dev
     "http://localhost:53075",     # Another local dev port
-    "https://as-grid-frontend.zeabur.app",  # Production frontend
+    "https://louisasgrid-web.zeabur.app",  # Production frontend (actual deployed URL)
     # Add "*" temporarily if you need to allow all origins during testing
 ]
 

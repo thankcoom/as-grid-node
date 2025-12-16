@@ -1,0 +1,68 @@
+apiVersion: zeabur.com/v1
+kind: Template
+metadata:
+  name: AS Grid Trading Node
+  description: |
+    Personal grid trading node for AS Grid system.
+    Deploy your own trading bot that connects to Bitget exchange.
+  icon: https://raw.githubusercontent.com/louislab/as-grid/main/assets/icon.png
+  
+spec:
+  services:
+    - name: grid-node
+      icon: https://raw.githubusercontent.com/louislab/as-grid/main/assets/icon.png
+      template: GIT
+      git:
+        url: https://github.com/louislab/as-grid-node
+        branch: main
+        buildType: DOCKERFILE
+      
+      # Exposed ports
+      ports:
+        - id: api
+          port: 8000
+          type: HTTP
+      
+      # Environment variables
+      env:
+        # Connection Secret
+        - key: NODE_SECRET
+          description: "連線密鑰（自行設定，用於驗證連線）"
+          required: true
+          example: "my-secret-key-123"
+        
+        # Bitget API Configuration  
+        - key: EXCHANGE_API_KEY
+          description: "Bitget API Key"
+          required: true
+        
+        - key: EXCHANGE_SECRET
+          description: "Bitget API Secret"
+          required: true
+          
+        - key: EXCHANGE_PASSPHRASE
+          description: "Bitget Passphrase（API 創建時設定的）"
+          required: true
+        
+        # Trading Configuration
+        - key: DEFAULT_SYMBOL
+          description: "預設交易對（如 BTCUSDT）"
+          required: false
+          default: "BTCUSDT"
+          
+        - key: LOG_LEVEL
+          description: "日誌級別"
+          required: false
+          default: "INFO"
+          
+      # Resource limits
+      resources:
+        cpu: 0.5
+        memory: 512Mi
+        
+      # Health check
+      healthcheck:
+        path: /health
+        port: 8000
+        interval: 30s
+        timeout: 10s

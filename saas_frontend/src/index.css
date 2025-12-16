@@ -1,0 +1,219 @@
+/* Google Fonts - Must be first */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AS Grid - Premium Dark Theme Styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg-primary: #0d0d0d;
+  --bg-secondary: #141414;
+  --bg-tertiary: #1a1a1a;
+  --text-primary: #ffffff;
+  --text-muted: #808080;
+  --border: #2a2a2a;
+  --accent: #ffffff;
+}
+
+body {
+  @apply bg-bg-primary text-text-primary antialiased;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Glassmorphism card */
+.glass-card {
+  background: rgba(20, 20, 20, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Premium gradient backgrounds */
+.bg-gradient-radial {
+  background: radial-gradient(ellipse at top, rgba(60, 60, 60, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom, rgba(40, 40, 40, 0.1) 0%, transparent 50%);
+}
+
+.bg-grid-pattern {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* Inputs */
+input,
+textarea,
+select {
+  @apply bg-bg-tertiary border border-border text-text-primary outline-none focus:border-white/30 transition-all duration-300 rounded-lg;
+}
+
+input::placeholder {
+  @apply text-text-disabled opacity-50;
+}
+
+/* Buttons */
+button {
+  @apply transition-all duration-200 active:scale-[0.98];
+}
+
+.btn-primary {
+  @apply bg-white text-black font-semibold py-3 px-6 rounded-lg hover:bg-white/90 hover:shadow-lg hover:shadow-white/10 active:bg-white/80;
+}
+
+.btn-secondary {
+  @apply bg-bg-tertiary border border-border text-text-secondary py-3 px-6 rounded-lg hover:border-white/30 hover:text-text-primary;
+}
+
+/* Cards */
+.card {
+  @apply bg-bg-secondary border border-border rounded-xl p-6 transition-all duration-300 hover:border-white/10;
+}
+
+.card-elevated {
+  @apply bg-bg-secondary/80 backdrop-blur-sm border border-white/5 rounded-xl p-6 shadow-2xl shadow-black/50;
+}
+
+/* Stats display */
+.stat-value {
+  @apply text-3xl font-bold text-text-primary tracking-tight;
+}
+
+.stat-label {
+  @apply text-xs font-medium text-text-muted uppercase tracking-widest mt-1;
+}
+
+/* Table styles */
+.table-header {
+  @apply bg-bg-tertiary/50 border-b border-border;
+}
+
+.table-row {
+  @apply border-b border-border/50 hover:bg-white/[0.02] transition-colors;
+}
+
+/* Status badges */
+.badge {
+  @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium;
+}
+
+.badge-success {
+  @apply bg-white/10 text-white;
+}
+
+.badge-warning {
+  @apply bg-text-muted/20 text-text-muted;
+}
+
+.badge-error {
+  @apply bg-text-disabled/20 text-text-disabled;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-slow {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+  }
+
+  50% {
+    box-shadow: 0 0 40px rgba(255, 255, 255, 0.15);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 3s ease-in-out infinite;
+}
+
+/* Staggered fade-in for children */
+.stagger-children>* {
+  opacity: 0;
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.stagger-children>*:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.stagger-children>*:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.stagger-children>*:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.stagger-children>*:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.stagger-children>*:nth-child(5) {
+  animation-delay: 0.5s;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.3);
+  outline-offset: 2px;
+}
+
+/* Monospace for code/numbers */
+.font-code {
+  font-family: 'JetBrains Mono', 'Menlo', monospace;
+}

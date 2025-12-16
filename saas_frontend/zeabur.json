@@ -1,0 +1,12 @@
+{
+    "service": {
+        "name": "as-grid-frontend",
+        "dockerfile": "Dockerfile",
+        "env": {
+            "VITE_AUTH_API_URL": {
+                "description": "Backend API URL (auth server)",
+                "required": true
+            }
+        }
+    }
+}

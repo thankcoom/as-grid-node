@@ -1,0 +1,24 @@
+{
+    "service": {
+        "name": "as-grid-node",
+        "dockerfile": "Dockerfile",
+        "env": {
+            "NODE_SECRET": {
+                "description": "A secret password for your frontend to connect. Keep it safe!",
+                "random": true
+            },
+            "EXCHANGE_API_KEY": {
+                "description": "Your Bitget API Key",
+                "required": true
+            },
+            "EXCHANGE_SECRET": {
+                "description": "Your Bitget API Secret",
+                "required": true
+            },
+            "EXCHANGE_PASSPHRASE": {
+                "description": "Your Bitget API Passphrase",
+                "required": true
+            }
+        }
+    }
+}

@@ -1,0 +1,28 @@
+{
+    "service": {
+        "name": "as-grid-auth-server",
+        "dockerfile": "Dockerfile",
+        "env": {
+            "SECRET_KEY": {
+                "description": "JWT secret key for authentication",
+                "random": true
+            },
+            "ENCRYPTION_KEY": {
+                "description": "Fernet encryption key for sensitive data",
+                "random": true
+            },
+            "DATABASE_URL": {
+                "description": "PostgreSQL connection URL (auto-set if using Zeabur PostgreSQL addon)",
+                "required": true
+            }
+        },
+        "addons": [
+            {
+                "type": "postgresql",
+                "injectEnv": {
+                    "DATABASE_URL": "DATABASE_URL"
+                }
+            }
+        ]
+    }
+}

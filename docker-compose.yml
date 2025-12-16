@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # 1. 官方授權伺服器 (Auth Server)
+  auth_server:
+    build:
+      context: ./auth_server
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/grid_saas
+      - SECRET_KEY=dev_secret_key
+      - ENCRYPTION_KEY=gK7xL2p4Q9zR5s8T1v3Y6n0mJ4k8h2d5f9g7j3k1l6z=
+    depends_on:
+      - db
+
+  # 2. 模擬用戶的 Grid Node (原本是用戶部署在 Zeabur)
+  grid_node:
+    build:
+      context: ./grid_node
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8000" # 映射到本地 8001，模擬遠端 URL
+    environment:
+      - NODE_SECRET=my_local_secret
+      # 模擬的 API Key，實際上程式只會檢查格式，不會真的連交易所 (除非您填真的)
+      - EXCHANGE_API_KEY=test_key
+      - EXCHANGE_SECRET=test_secret
+      - EXCHANGE_PASSPHRASE=test_pass
+
+  # 3. 前端網頁
+  frontend:
+    build:
+      context: ./saas_frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - auth_server
+
+  # 4. 資料庫
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=grid_saas
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

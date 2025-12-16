@@ -19,8 +19,14 @@ app = FastAPI(
 async def startup_event():
     initial_data.init()
 
-# CORS
-origins = ["*"]
+# CORS - Allow frontend domains
+origins = [
+    "http://localhost:5173",      # Local dev
+    "http://localhost:5174",      # Alternative local dev
+    "http://localhost:53075",     # Another local dev port
+    "https://as-grid-frontend.zeabur.app",  # Production frontend
+    # Add "*" temporarily if you need to allow all origins during testing
+]
 
 app.add_middleware(
     CORSMiddleware,

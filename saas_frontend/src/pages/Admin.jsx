@@ -48,7 +48,7 @@ export default function Admin() {
 
     const handleApprove = async (userId) => {
         try {
-            await api.put(`/admin/users/${userId}/approve`);
+            await api.post(`/admin/users/${userId}/approve`);
             setRefresh(!refresh);
         } catch (err) {
             console.error(err);
@@ -293,8 +293,59 @@ export default function Admin() {
                         </div>
                     )}
 
-                    {/* Add other tabs implementation here if needed, keeping them simplified for this update */}
-                    {(activeTab === 'pending' || activeTab === 'users' || activeTab === 'groups') && (
+                    {activeTab === 'pending' && (
+                        <div className="space-y-6">
+                            <h2 className="text-xl font-bold text-white mb-2">{t.admin.pendingUsers}</h2>
+                            <div className="glass-card rounded-2xl overflow-hidden">
+                                <table className="w-full text-left">
+                                    <thead className="bg-white/5 text-white/40 text-xs uppercase">
+                                        <tr>
+                                            <th className="px-6 py-4 font-medium">{t.auth.email}</th>
+                                            <th className="px-6 py-4 font-medium">UID</th>
+                                            <th className="px-6 py-4 font-medium">{t.common.create}</th>
+                                            <th className="px-6 py-4 font-medium">{t.common.action}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5">
+                                        {pendingUsers.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="4" className="px-6 py-12 text-center text-white/20">
+                                                    {t.admin.noPending}
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            pendingUsers.map((user) => (
+                                                <tr key={user.id} className="text-sm text-white hover:bg-white/5 transition-colors">
+                                                    <td className="px-6 py-4">{user.email}</td>
+                                                    <td className="px-6 py-4 font-mono">{user.exchange_uid || '-'}</td>
+                                                    <td className="px-6 py-4 text-white/40">{new Date(user.created_at).toLocaleDateString()}</td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => handleApprove(user.id)}
+                                                                className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-xs font-medium hover:bg-emerald-500/20 transition-colors"
+                                                            >
+                                                                {t.admin.approve}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleReject(user.id)}
+                                                                className="px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg text-xs font-medium hover:bg-red-500/20 transition-colors"
+                                                            >
+                                                                {t.admin.reject}
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Placeholder for other tabs if needed */}
+                    {(activeTab === 'users' || activeTab === 'groups') && (
                         <div className="flex items-center justify-center py-20 text-white/20">
                             Tab content placeholder for {activeTab}
                         </div>

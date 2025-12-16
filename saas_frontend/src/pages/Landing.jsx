@@ -22,7 +22,7 @@ export default function Landing() {
                         <Link to="/login" className="text-[13px] text-text-muted hover:text-white transition-colors hidden sm:block">
                             {t.nav.login}
                         </Link>
-                        <Link to="/register" className="px-5 py-2.5 bg-white text-black font-semibold text-[13px] rounded-xl hover:bg-white/90 transition-all flex items-center gap-2">
+                        <Link to="/register" className="btn-primary">
                             {t.nav.register}
                             <Icons.ArrowRight className="w-4 h-4" />
                         </Link>
@@ -60,7 +60,7 @@ export default function Landing() {
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10 animate-fade-in" style={{ animationDelay: '0.3s' }}>
                         <Link
                             to="/register"
-                            className="px-8 py-4 bg-white text-black font-bold text-[15px] rounded-xl hover:bg-white/90 transition-all hover:shadow-lg hover:shadow-white/10 flex items-center gap-2"
+                            className="btn-primary text-[15px] px-8"
                         >
                             {t.landing.cta} <Icons.ArrowRight className="w-4 h-4" />
                         </Link>
@@ -169,7 +169,7 @@ export default function Landing() {
                     <div className="flex flex-col items-center gap-6">
                         <Link
                             to="/register"
-                            className="px-10 py-4 bg-white text-black font-bold text-[15px] rounded-xl hover:bg-white/90 transition-all"
+                            className="btn-primary text-[15px] px-10"
                         >
                             {t.cta.button}
                         </Link>
@@ -182,7 +182,7 @@ export default function Landing() {
                                     href={BITGET_REFERRAL_URL}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="px-5 py-2.5 bg-white text-black font-semibold text-[13px] rounded-lg hover:bg-white/90 transition-all"
+                                    className="btn-primary h-10"
                                 >
                                     {t.cta.bitgetLink} →
                                 </a>

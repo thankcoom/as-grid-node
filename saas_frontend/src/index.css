@@ -56,57 +56,51 @@ input::placeholder {
   @apply text-text-disabled opacity-50;
 }
 
-/* Buttons - Psychology-Based Design */
-/* Fitts's Law: min 44x44px touch target, larger = easier to click */
-/* Isolation Effect: high contrast makes important buttons stand out */
+/* Buttons - 8-Point Grid System (2024 Best Practices) */
+/* Height: 48px (primary), 40px (secondary), 32px (small) */
+/* Spacing: 8px between buttons, 16px between elements */
 button {
   @apply transition-all duration-200 active:scale-[0.98];
 }
 
-/* Primary CTA - High visibility, large target */
+/* Primary CTA - Main action, high visibility */
 .btn-primary {
-  @apply bg-white text-black font-semibold py-3.5 px-7 rounded-xl 
-         hover:bg-white/90 hover:shadow-lg hover:shadow-white/10 
-         hover:scale-[1.02] active:bg-white/80 active:scale-[0.98]
-         min-h-[48px] text-[15px] tracking-wide;
+  @apply h-12 px-6 bg-white text-black font-semibold rounded-xl text-[14px] tracking-wide inline-flex items-center justify-center gap-2 hover:bg-white/90 hover:shadow-lg hover:shadow-white/10 active:bg-white/80;
 }
 
-/* Secondary - Less prominent but still accessible */
+/* Secondary - Less prominent */
 .btn-secondary {
-  @apply bg-bg-tertiary border border-border text-white/70 
-         py-3.5 px-7 rounded-xl min-h-[48px] text-[14px]
-         hover:border-white/30 hover:text-white hover:bg-white/5;
+  @apply h-10 px-5 bg-bg-tertiary border border-border text-white/70 rounded-xl text-[13px] inline-flex items-center justify-center gap-2 hover:border-white/30 hover:text-white hover:bg-white/5;
 }
 
-/* Success - Trust, positive action (green tones) */
+/* Small - For tables and compact areas */
+.btn-small {
+  @apply h-8 px-4 text-[12px] rounded-lg inline-flex items-center justify-center gap-1.5 bg-white/5 text-white/60 border border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20;
+}
+
+/* Icon button - Square, for icons only */
+.btn-icon {
+  @apply w-10 h-10 rounded-xl inline-flex items-center justify-center bg-white/5 text-white/60 border border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20;
+}
+
+/* Success - Positive action (green) */
 .btn-success {
-  @apply bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
-         py-3 px-6 rounded-xl font-medium min-h-[44px]
-         hover:bg-emerald-500/20 hover:border-emerald-500/40
-         active:scale-[0.98];
+  @apply h-10 px-5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl text-[13px] font-medium inline-flex items-center justify-center gap-2 hover:bg-emerald-500/20 hover:border-emerald-500/40;
 }
 
-/* Danger - Destructive actions (red tones) */
+/* Danger - Destructive action (red) */
 .btn-danger {
-  @apply bg-red-500/10 text-red-400 border border-red-500/20
-         py-3 px-6 rounded-xl font-medium min-h-[44px]
-         hover:bg-red-500/20 hover:border-red-500/40
-         active:scale-[0.98];
+  @apply h-10 px-5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl text-[13px] font-medium inline-flex items-center justify-center gap-2 hover:bg-red-500/20 hover:border-red-500/40;
 }
 
-/* Warning - Attention needed (amber tones) */
+/* Warning - Attention (amber) */
 .btn-warning {
-  @apply bg-amber-500/10 text-amber-400 border border-amber-500/20
-         py-3 px-6 rounded-xl font-medium min-h-[44px]
-         hover:bg-amber-500/20 hover:border-amber-500/40
-         active:scale-[0.98];
+  @apply h-10 px-5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-xl text-[13px] font-medium inline-flex items-center justify-center gap-2 hover:bg-amber-500/20 hover:border-amber-500/40;
 }
 
-/* Ghost - Minimal visual weight */
+/* Ghost - Minimal weight */
 .btn-ghost {
-  @apply text-white/50 py-2 px-4 rounded-lg min-h-[40px]
-         hover:text-white hover:bg-white/5
-         active:scale-[0.98];
+  @apply h-10 px-4 text-white/50 rounded-lg text-[13px] inline-flex items-center justify-center gap-2 hover:text-white hover:bg-white/5;
 }
 
 /* Cards */

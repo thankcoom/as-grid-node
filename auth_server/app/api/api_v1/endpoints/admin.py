@@ -145,6 +145,26 @@ def reject_user(
     return {"message": "User rejected", "email": user.email}
 
 
+@router.post("/users/{user_id}/group")
+def assign_user_to_group(
+    user_id: str,
+    group_id: str,
+    db: Session = Depends(deps.get_db),
+    admin: models.User = Depends(get_admin_user)
+):
+    """分配用戶到群組"""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if group_id:
+        group = db.query(models.Group).filter(models.Group.id == group_id).first()
+        if not group:
+            raise HTTPException(status_code=404, detail="Group not found")
+    
+    user.group_id = group_id if group_id else None
+    db.commit()
+    
     return {"message": "User group updated", "group_id": group_id}
 
 

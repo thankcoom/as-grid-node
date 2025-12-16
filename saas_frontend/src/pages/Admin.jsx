@@ -70,6 +70,7 @@ export default function Admin() {
             setUsers(allUsersRes.data); // Set all users
         } catch (err) {
             console.error(err);
+            alert("Fetch Data Error: " + (err.response?.data?.detail || err.message));
             if (err.response?.status === 401) navigate('/login');
         }
     };

@@ -3,21 +3,18 @@
         "name": "as-grid-node",
         "dockerfile": "Dockerfile",
         "env": {
+            "AUTH_SERVER_URL": {
+                "description": "Official API server URL (fixed)",
+                "default": "https://louisasgrid-api.zeabur.app",
+                "required": true
+            },
+            "USER_ID": {
+                "description": "Your user ID from the official website Deploy page",
+                "required": true
+            },
             "NODE_SECRET": {
-                "description": "A secret password for your frontend to connect. Keep it safe!",
+                "description": "Node secret key (customizable, remember it)",
                 "random": true
-            },
-            "EXCHANGE_API_KEY": {
-                "description": "Your Bitget API Key",
-                "required": true
-            },
-            "EXCHANGE_SECRET": {
-                "description": "Your Bitget API Secret",
-                "required": true
-            },
-            "EXCHANGE_PASSPHRASE": {
-                "description": "Your Bitget API Passphrase",
-                "required": true
             }
         }
     }

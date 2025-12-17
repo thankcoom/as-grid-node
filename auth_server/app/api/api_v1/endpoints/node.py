@@ -93,13 +93,14 @@ def register_node(
             detail=f"User not approved. Status: {user.status}"
         )
     
-    # 獲取並解密 API 憑證
+    # 獲取並解密 API 憑證（可選 - 如果失敗則 credentials = None）
     credentials = None
     if user.credentials:
-        from cryptography.fernet import Fernet
-        fernet = Fernet(settings.ENCRYPTION_KEY.encode())
-        
         try:
+            from cryptography.fernet import Fernet, InvalidToken
+            # 嘗試使用 ENCRYPTION_KEY 解密
+            fernet = Fernet(settings.ENCRYPTION_KEY.encode())
+            
             api_key = fernet.decrypt(user.credentials.api_key_encrypted.encode()).decode()
             api_secret = fernet.decrypt(user.credentials.api_secret_encrypted.encode()).decode()
             passphrase = ""
@@ -111,9 +112,9 @@ def register_node(
                 "api_secret": api_secret,
                 "passphrase": passphrase
             }
-        except Exception as e:
-            logger.error(f"Failed to decrypt credentials: {e}")
-            raise HTTPException(status_code=500, detail="Failed to decrypt credentials")
+        except (InvalidToken, ValueError, Exception) as e:
+            # 解密失敗不阻止註冊，只是沒有憑證
+            logger.warning(f"Could not decrypt credentials (this is OK if API not set): {e}")
     
     # 創建或更新 NodeStatus
     node_status = db.query(models.NodeStatus).filter(

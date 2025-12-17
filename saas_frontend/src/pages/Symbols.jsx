@@ -20,6 +20,9 @@ export default function Symbols() {
     const [error, setError] = useState(null);
     const [editingSymbol, setEditingSymbol] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
+    const [scores, setScores] = useState({});
+    const [previews, setPreviews] = useState({});
+    const [loadingScores, setLoadingScores] = useState({});
 
     // 新增交易對表單
     const [newSymbol, setNewSymbol] = useState({
@@ -47,6 +50,33 @@ export default function Symbols() {
     useEffect(() => {
         loadSymbols();
     }, [loadSymbols]);
+
+    // 載入評分
+    const loadScore = async (symbol) => {
+        if (loadingScores[symbol]) return;
+        setLoadingScores(prev => ({ ...prev, [symbol]: true }));
+        try {
+            const result = await symbolsApi.getScore(symbol);
+            setScores(prev => ({ ...prev, [symbol]: result }));
+        } catch (err) {
+            console.error(`Failed to load score for ${symbol}:`, err);
+        } finally {
+            setLoadingScores(prev => ({ ...prev, [symbol]: false }));
+        }
+    };
+
+    // 載入預覽
+    const loadPreview = async (symbol) => {
+        if (previews[symbol]?.loading) return;
+        setPreviews(prev => ({ ...prev, [symbol]: { loading: true } }));
+        try {
+            const result = await symbolsApi.getPreview(symbol);
+            setPreviews(prev => ({ ...prev, [symbol]: { loading: false, data: result } }));
+        } catch (err) {
+            console.error(`Failed to load preview for ${symbol}:`, err);
+            setPreviews(prev => ({ ...prev, [symbol]: { loading: false, error: err.message } }));
+        }
+    };
 
     const handleToggle = async (symbol) => {
         try {
@@ -165,12 +195,12 @@ export default function Symbols() {
                         <thead>
                             <tr className="border-b border-white/10">
                                 <th className="text-left px-6 py-4 text-[11px] font-semibold text-white/40 uppercase">交易對</th>
-                                <th className="text-left px-6 py-4 text-[11px] font-semibold text-white/40 uppercase">止盈 (TP)</th>
-                                <th className="text-left px-6 py-4 text-[11px] font-semibold text-white/40 uppercase">網格 (GS)</th>
-                                <th className="text-left px-6 py-4 text-[11px] font-semibold text-white/40 uppercase">數量</th>
-                                <th className="text-left px-6 py-4 text-[11px] font-semibold text-white/40 uppercase">槓桿</th>
-                                <th className="text-left px-6 py-4 text-[11px] font-semibold text-white/40 uppercase">狀態</th>
-                                <th className="text-right px-6 py-4 text-[11px] font-semibold text-white/40 uppercase">操作</th>
+                                <th className="text-left px-4 py-4 text-[11px] font-semibold text-white/40 uppercase">評分</th>
+                                <th className="text-left px-4 py-4 text-[11px] font-semibold text-white/40 uppercase">30日預估</th>
+                                <th className="text-left px-4 py-4 text-[11px] font-semibold text-white/40 uppercase">TP/GS</th>
+                                <th className="text-left px-4 py-4 text-[11px] font-semibold text-white/40 uppercase">數量</th>
+                                <th className="text-left px-4 py-4 text-[11px] font-semibold text-white/40 uppercase">狀態</th>
+                                <th className="text-right px-4 py-4 text-[11px] font-semibold text-white/40 uppercase">操作</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -187,16 +217,52 @@ export default function Symbols() {
                                             <span className="text-white font-medium">{sym.symbol}</span>
                                             <span className="text-white/40 text-xs ml-2">{sym.ccxt_symbol}</span>
                                         </td>
-                                        <td className="px-6 py-4 text-white/60">{(sym.take_profit_spacing * 100).toFixed(2)}%</td>
-                                        <td className="px-6 py-4 text-white/60">{(sym.grid_spacing * 100).toFixed(2)}%</td>
-                                        <td className="px-6 py-4 text-white/60">{sym.initial_quantity}</td>
-                                        <td className="px-6 py-4 text-white/60">{sym.leverage}x</td>
+                                        {/* 評分欄 */}
+                                        <td className="px-4 py-4">
+                                            {scores[sym.symbol]?.score !== undefined ? (
+                                                <span className={`text-sm font-medium ${scores[sym.symbol].score >= 70 ? 'text-emerald-400' :
+                                                        scores[sym.symbol].score >= 50 ? 'text-amber-400' : 'text-white/60'
+                                                    }`}>
+                                                    {scores[sym.symbol].score?.toFixed(1) || '-'}
+                                                </span>
+                                            ) : (
+                                                <button
+                                                    onClick={() => loadScore(sym.symbol)}
+                                                    disabled={loadingScores[sym.symbol]}
+                                                    className="text-xs text-white/40 hover:text-white/60"
+                                                >
+                                                    {loadingScores[sym.symbol] ? '...' : '載入'}
+                                                </button>
+                                            )}
+                                        </td>
+                                        {/* 30日預覽欄 */}
+                                        <td className="px-4 py-4">
+                                            {previews[sym.symbol]?.data?.preview ? (
+                                                <span className={`text-sm font-medium ${previews[sym.symbol].data.preview.total_return >= 0 ? 'text-emerald-400' : 'text-red-400'
+                                                    }`}>
+                                                    {(previews[sym.symbol].data.preview.total_return * 100).toFixed(1)}%
+                                                </span>
+                                            ) : previews[sym.symbol]?.loading ? (
+                                                <span className="text-xs text-white/40">載入中...</span>
+                                            ) : (
+                                                <button
+                                                    onClick={() => loadPreview(sym.symbol)}
+                                                    className="text-xs text-white/40 hover:text-white/60"
+                                                >
+                                                    預覽
+                                                </button>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-4 text-white/60 text-sm">
+                                            {(sym.take_profit_spacing * 100).toFixed(1)}% / {(sym.grid_spacing * 100).toFixed(1)}%
+                                        </td>
+                                        <td className="px-4 py-4 text-white/60">{sym.initial_quantity}</td>
                                         <td className="px-6 py-4">
                                             <button
                                                 onClick={() => handleToggle(sym.symbol)}
                                                 className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${sym.enabled
-                                                        ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
-                                                        : 'bg-white/10 text-white/40 hover:bg-white/20'
+                                                    ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
+                                                    : 'bg-white/10 text-white/40 hover:bg-white/20'
                                                     }`}
                                             >
                                                 {sym.enabled ? '啟用中' : '已停用'}

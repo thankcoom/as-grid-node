@@ -105,6 +105,18 @@ def get_status():
     return bot_manager.get_status()
 
 
+@app.post("/api/v1/grid/close_all", dependencies=[Depends(verify_secret)])
+async def close_all_positions():
+    """一鍵平倉 - 關閉所有持倉"""
+    return await bot_manager.close_all_positions()
+
+
+@app.post("/api/v1/grid/pause", dependencies=[Depends(verify_secret)])
+async def toggle_pause():
+    """暫停/恢復補倉"""
+    return await bot_manager.toggle_pause()
+
+
 @app.post("/api/v1/grid/command", dependencies=[Depends(verify_secret)])
 async def execute_command(req: CommandRequest):
     """執行遠端命令"""

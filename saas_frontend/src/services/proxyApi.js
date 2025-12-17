@@ -54,6 +54,18 @@ export const gridApi = {
         const response = await api.post('/proxy/grid/stop');
         return response.data;
     },
+
+    /** 一鍵平倉 */
+    closeAll: async () => {
+        const response = await api.post('/proxy/grid/close_all');
+        return response.data;
+    },
+
+    /** 暫停/恢復補倉 */
+    togglePause: async () => {
+        const response = await api.post('/proxy/grid/pause');
+        return response.data;
+    },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -119,6 +131,18 @@ export const symbolsApi = {
         const response = await api.post(`/proxy/symbols/${symbol}/toggle`);
         return response.data;
     },
+
+    /** 獲取交易對評分 */
+    getScore: async (symbol) => {
+        const response = await api.get(`/proxy/symbols/${symbol}/score`);
+        return response.data;
+    },
+
+    /** 獲取 30 日回測預覽 */
+    getPreview: async (symbol, days = 30) => {
+        const response = await api.get(`/proxy/symbols/${symbol}/preview?days=${days}`);
+        return response.data;
+    },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -138,9 +162,27 @@ export const backtestApi = {
         return response.data;
     },
 
-    /** 參數優化 */
+    /** 參數優化（網格搜索）*/
     optimize: async (params) => {
         const response = await api.post('/proxy/backtest/optimize', params);
+        return response.data;
+    },
+
+    /** 智能優化（Optuna TPE）*/
+    smartOptimize: async (params) => {
+        const response = await api.post('/proxy/backtest/smart_optimize', params);
+        return response.data;
+    },
+
+    /** 獲取 Top 5 結果 */
+    getTopResults: async (symbol) => {
+        const response = await api.get(`/proxy/backtest/top_results/${symbol}`);
+        return response.data;
+    },
+
+    /** 應用優化參數到配置 */
+    applyParams: async (symbol, rank = 0) => {
+        const response = await api.post(`/proxy/backtest/apply_params/${symbol}?rank=${rank}`);
         return response.data;
     },
 };

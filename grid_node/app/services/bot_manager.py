@@ -25,6 +25,7 @@ class BotManager:
         self.task: Optional[asyncio.Task] = None
         self.auth_client: Optional[AuthClient] = None
         self.is_trading = False
+        self.is_paused = False  # 暫停補倉狀態
         self._config: Optional[GlobalConfig] = None
         
         # 初始化 AuthClient（如果配置了官方伺服器）
@@ -80,11 +81,13 @@ class BotManager:
             return {
                 "status": "stopped",
                 "is_trading": False,
+                "is_paused": self.is_paused,
                 "total_pnl": 0,
                 "unrealized_pnl": 0,
                 "equity": 0,
                 "positions": [],
-                "symbols": []
+                "symbols": [],
+                "indicators": None
             }
         
         state = self.bot.state
@@ -107,15 +110,66 @@ class BotManager:
         for acc in state.accounts.values():
             equity += getattr(acc, 'equity', 0)
         
+        # 獲取指標數據
+        indicators = self._get_indicators_data()
+        
         return {
             "status": "running" if state.running else "stopped",
             "is_trading": self.is_trading,
+            "is_paused": self.is_paused,
             "total_pnl": state.total_profit,
             "unrealized_pnl": sum(p.get("unrealized_pnl", 0) for p in positions),
             "equity": equity,
             "positions": positions,
-            "symbols": symbols
+            "symbols": symbols,
+            "indicators": indicators
         }
+    
+    def _get_indicators_data(self) -> Dict[str, Any]:
+        """獲取交易指標數據"""
+        if not self.bot:
+            return None
+        
+        indicators = {
+            "funding_rate": 0,
+            "ofi_value": 0,
+            "volume_ratio": 1.0,
+            "spread_ratio": 1.0,
+            "total_positions": 0,
+            "bandit_arm": 0
+        }
+        
+        try:
+            # 計算總持倉
+            total_pos = 0
+            for sym_state in self.bot.state.symbols.values():
+                total_pos += sym_state.long_position + sym_state.short_position
+            indicators["total_positions"] = int(total_pos)
+            
+            # 從 Bot 獲取領先指標（如果有）
+            if hasattr(self.bot, 'leading_indicator_mgr') and self.bot.leading_indicator_mgr:
+                li_mgr = self.bot.leading_indicator_mgr
+                first_symbol = next(iter(self.bot.state.symbols.keys()), None)
+                if first_symbol:
+                    indicators["ofi_value"] = li_mgr.current_ofi.get(first_symbol, 0) if hasattr(li_mgr, 'current_ofi') else 0
+                    indicators["volume_ratio"] = li_mgr.current_volume_ratio.get(first_symbol, 1.0) if hasattr(li_mgr, 'current_volume_ratio') else 1.0
+                    indicators["spread_ratio"] = li_mgr.current_spread_ratio.get(first_symbol, 1.0) if hasattr(li_mgr, 'current_spread_ratio') else 1.0
+            
+            # 從 Bot 獲取 Bandit（如果有）
+            if hasattr(self.bot, 'bandit_optimizer') and self.bot.bandit_optimizer:
+                indicators["bandit_arm"] = getattr(self.bot.bandit_optimizer, 'current_arm_idx', 0)
+            
+            # Funding Rate（如果有）
+            if hasattr(self.bot, 'funding_rate_mgr') and self.bot.funding_rate_mgr:
+                fr_mgr = self.bot.funding_rate_mgr
+                first_symbol = next(iter(self.bot.state.symbols.keys()), None)
+                if first_symbol and hasattr(fr_mgr, 'current_rates'):
+                    indicators["funding_rate"] = fr_mgr.current_rates.get(first_symbol, 0)
+        
+        except Exception as e:
+            logger.warning(f"Failed to get indicators: {e}")
+        
+        return indicators
 
     def start(self, symbol: str, quantity: float) -> Dict[str, str]:
         """啟動交易"""
@@ -153,6 +207,7 @@ class BotManager:
         self._config = config
         self.bot = MaxGridBot(config)
         self.is_trading = True
+        self.is_paused = False
         
         async def run():
             try:
@@ -171,6 +226,7 @@ class BotManager:
     async def stop(self) -> Dict[str, str]:
         """停止交易"""
         self.is_trading = False
+        self.is_paused = False
         
         if self.bot:
             await self.bot.stop()
@@ -183,6 +239,77 @@ class BotManager:
         
         logger.info("Trading stopped")
         return {"status": "stopped"}
+
+    async def close_all_positions(self) -> Dict[str, Any]:
+        """
+        一鍵平倉 - 關閉所有持倉
+        
+        Returns:
+            平倉結果
+        """
+        if not self.bot or not self.is_trading:
+            return {"status": "error", "message": "No active trading session"}
+        
+        try:
+            logger.info("Closing all positions...")
+            
+            # 調用 bot 的平倉方法
+            if hasattr(self.bot, 'close_all_positions'):
+                result = await self.bot.close_all_positions()
+                logger.info(f"Close all positions result: {result}")
+                return {"status": "success", "result": result}
+            else:
+                # 如果 bot 沒有這個方法，嘗試直接通過交易所平倉
+                closed = []
+                for sym_state in self.bot.state.symbols.values():
+                    symbol = sym_state.symbol
+                    if sym_state.long_position > 0 or sym_state.short_position > 0:
+                        # 使用 bot 的 exchange 進行平倉
+                        if hasattr(self.bot, 'exchange') and self.bot.exchange:
+                            try:
+                                if sym_state.long_position > 0:
+                                    await self.bot.exchange.create_market_sell_order(
+                                        sym_state.ccxt_symbol if hasattr(sym_state, 'ccxt_symbol') else symbol,
+                                        sym_state.long_position,
+                                        params={'reduceOnly': True}
+                                    )
+                                    closed.append(f"{symbol} LONG")
+                                if sym_state.short_position > 0:
+                                    await self.bot.exchange.create_market_buy_order(
+                                        sym_state.ccxt_symbol if hasattr(sym_state, 'ccxt_symbol') else symbol,
+                                        sym_state.short_position,
+                                        params={'reduceOnly': True}
+                                    )
+                                    closed.append(f"{symbol} SHORT")
+                            except Exception as e:
+                                logger.error(f"Failed to close {symbol}: {e}")
+                
+                return {"status": "success", "closed": closed}
+        
+        except Exception as e:
+            logger.error(f"Close all positions failed: {e}")
+            return {"status": "error", "message": str(e)}
+
+    async def toggle_pause(self) -> Dict[str, Any]:
+        """
+        暫停/恢復補倉
+        
+        Returns:
+            暫停狀態
+        """
+        self.is_paused = not self.is_paused
+        
+        if self.bot and hasattr(self.bot, 'set_pause'):
+            self.bot.set_pause(self.is_paused)
+        
+        status = "paused" if self.is_paused else "resumed"
+        logger.info(f"Trading {status}")
+        
+        return {
+            "status": "success",
+            "is_paused": self.is_paused,
+            "message": f"Trading {status}"
+        }
 
     def get_status(self) -> Dict[str, Any]:
         """獲取當前狀態"""
@@ -207,6 +334,12 @@ class BotManager:
         
         elif action == "stop":
             return await self.stop()
+        
+        elif action == "close_all":
+            return await self.close_all_positions()
+        
+        elif action == "pause":
+            return await self.toggle_pause()
         
         elif action == "update_config":
             # 更新配置（未來擴展）

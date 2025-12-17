@@ -213,6 +213,15 @@ async def verify_api(
                 detail="This exchange account is already registered by another user.",
             )
         
+        # 【安全限制】Active 用戶更換 API 時，必須使用相同的 UID
+        # 這確保用戶只能更換自己帳戶的 API 密鑰，而不能換成別人的帳戶
+        if is_update and current_user.exchange_uid:
+            if uid != current_user.exchange_uid:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"UID mismatch. Your registered UID is {current_user.exchange_uid}, but this API belongs to UID {uid}. You can only update API credentials for your registered Bitget account.",
+                )
+        
         # Update user
         current_user.exchange_uid = uid
         current_user.api_verified_at = datetime.utcnow()

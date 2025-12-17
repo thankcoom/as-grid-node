@@ -224,3 +224,140 @@ def toggle_all_symbols(enabled: bool):
     logger.info(f"Toggled all {count} symbols: {status}")
     
     return {"status": status, "count": count}
+
+
+@router.get("/{symbol}/score")
+async def get_symbol_score(symbol: str):
+    """
+    獲取交易對評分
+    
+    對應 GUI: SymbolsPage 幣種評分載入
+    """
+    try:
+        # 嘗試使用選幣系統的評分器
+        from coin_selection import SymbolScanner, CoinScorer
+        
+        # 初始化掃描器和評分器
+        scanner = SymbolScanner()
+        scorer = CoinScorer()
+        
+        # 掃描單個幣種
+        symbol_data = await scanner.scan_symbol(symbol)
+        
+        if not symbol_data:
+            return {
+                "symbol": symbol,
+                "score": None,
+                "error": "無法獲取數據"
+            }
+        
+        # 計算評分
+        score = scorer.calculate_score(symbol_data)
+        
+        return {
+            "symbol": symbol,
+            "score": score.total_score,
+            "amplitude": score.amplitude_score,
+            "trend": score.trend_score,
+            "volume": score.volume_score,
+            "recommendation": score.recommendation
+        }
+    
+    except ImportError:
+        logger.warning("coin_selection module not available")
+        return {
+            "symbol": symbol,
+            "score": None,
+            "error": "評分模組未安裝"
+        }
+    except Exception as e:
+        logger.error(f"Failed to get score for {symbol}: {e}")
+        return {
+            "symbol": symbol,
+            "score": None,
+            "error": str(e)
+        }
+
+
+@router.get("/{symbol}/preview")
+async def get_symbol_preview(symbol: str, days: int = 30):
+    """
+    獲取交易對 30 日回測預覽
+    
+    對應 GUI: SymbolsPage 30日回測預覽
+    """
+    try:
+        config = load_config()
+        
+        if symbol not in config.symbols:
+            raise HTTPException(404, f"Symbol {symbol} not found")
+        
+        sym_config = config.symbols[symbol]
+        
+        # 嘗試使用回測系統
+        try:
+            from backtest_system.grid_strategy import GridStrategy
+            from backtest_system.data_loader import DataLoader
+            from datetime import datetime, timedelta
+            
+            # 載入數據
+            loader = DataLoader()
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=days)
+            
+            # 獲取 K 線數據
+            kline_data = await loader.load_data(
+                symbol=sym_config.ccxt_symbol,
+                start_date=start_date,
+                end_date=end_date,
+                timeframe='1h'
+            )
+            
+            if kline_data is None or len(kline_data) < 100:
+                return {
+                    "symbol": symbol,
+                    "days": days,
+                    "preview": None,
+                    "error": "數據不足"
+                }
+            
+            # 執行回測
+            strategy = GridStrategy(
+                take_profit_spacing=sym_config.take_profit_spacing,
+                grid_spacing=sym_config.grid_spacing,
+                initial_quantity=sym_config.initial_quantity
+            )
+            
+            result = strategy.run(kline_data)
+            
+            return {
+                "symbol": symbol,
+                "days": days,
+                "preview": {
+                    "total_return": result.total_return,
+                    "total_trades": result.total_trades,
+                    "win_rate": result.win_rate,
+                    "max_drawdown": result.max_drawdown,
+                    "sharpe_ratio": result.sharpe_ratio
+                }
+            }
+            
+        except ImportError:
+            logger.warning("backtest_system module not available")
+            return {
+                "symbol": symbol,
+                "days": days,
+                "preview": None,
+                "error": "回測模組未安裝"
+            }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get preview for {symbol}: {e}")
+        return {
+            "symbol": symbol,
+            "days": days,
+            "preview": None,
+            "error": str(e)
+        }

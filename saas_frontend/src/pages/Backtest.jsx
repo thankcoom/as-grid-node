@@ -29,6 +29,8 @@ export default function Backtest() {
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
     const [optimizing, setOptimizing] = useState(false);
+    const [smartOptimizing, setSmartOptimizing] = useState(false);
+    const [topResults, setTopResults] = useState([]);
     const [error, setError] = useState(null);
 
     const handleRunBacktest = async () => {
@@ -71,6 +73,54 @@ export default function Backtest() {
             setError(err.response?.data?.detail || 'Optimization failed');
         } finally {
             setOptimizing(false);
+        }
+    };
+
+    const handleSmartOptimize = async () => {
+        setSmartOptimizing(true);
+        setError(null);
+        setTopResults([]);
+        try {
+            const res = await backtestApi.smartOptimize({
+                symbol: params.symbol,
+                days: params.days,
+                initial_capital: params.initial_capital,
+                tp_min: 0.002,
+                tp_max: 0.008,
+                gs_min: 0.003,
+                gs_max: 0.01
+            });
+            // 使用最佳結果更新參數
+            setParams({
+                ...params,
+                take_profit_spacing: res.best_tp,
+                grid_spacing: res.best_gs
+            });
+            // 設置 Top 5 結果
+            if (res.top_5) {
+                setTopResults(res.top_5);
+            }
+            alert(`智能優化完成！最佳 TP: ${(res.best_tp * 100).toFixed(2)}%, GS: ${(res.best_gs * 100).toFixed(2)}%, 試驗次數: ${res.trials}`);
+        } catch (err) {
+            setError(err.response?.data?.detail || 'Smart optimization failed');
+        } finally {
+            setSmartOptimizing(false);
+        }
+    };
+
+    const handleApplyParams = async (rank) => {
+        try {
+            const res = await backtestApi.applyParams(params.symbol, rank);
+            if (res.status === 'success') {
+                setParams({
+                    ...params,
+                    take_profit_spacing: res.applied.take_profit_spacing,
+                    grid_spacing: res.applied.grid_spacing
+                });
+                alert('參數已應用到交易對配置！');
+            }
+        } catch (err) {
+            alert(`應用參數失敗: ${err.response?.data?.detail || err.message}`);
         }
     };
 
@@ -206,7 +256,7 @@ export default function Backtest() {
                                 </button>
                                 <button
                                     onClick={handleOptimize}
-                                    disabled={optimizing}
+                                    disabled={optimizing || smartOptimizing}
                                     className="w-full px-4 py-3 glass-card rounded-xl text-white disabled:opacity-50 flex items-center justify-center gap-2 hover:bg-white/10"
                                 >
                                     {optimizing ? (
@@ -217,11 +267,58 @@ export default function Backtest() {
                                     ) : (
                                         <>
                                             <Icons.Zap className="w-4 h-4" />
-                                            參數優化
+                                            網格優化
+                                        </>
+                                    )}
+                                </button>
+                                <button
+                                    onClick={handleSmartOptimize}
+                                    disabled={optimizing || smartOptimizing}
+                                    className="w-full px-4 py-3 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 rounded-xl text-white disabled:opacity-50 flex items-center justify-center gap-2 hover:from-purple-500/30 hover:to-blue-500/30"
+                                >
+                                    {smartOptimizing ? (
+                                        <>
+                                            <Icons.RefreshCw className="w-4 h-4 animate-spin" />
+                                            智能優化中...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Icons.Zap className="w-4 h-4" />
+                                            智能優化 (TPE)
                                         </>
                                     )}
                                 </button>
                             </div>
+
+                            {/* Top 5 Results */}
+                            {topResults.length > 0 && (
+                                <div className="mt-6 pt-6 border-t border-white/10">
+                                    <h3 className="text-sm font-semibold text-white mb-3">Top 5 結果</h3>
+                                    <div className="space-y-2">
+                                        {topResults.map((r, idx) => (
+                                            <div key={idx} className="flex items-center justify-between p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors">
+                                                <div className="flex-1">
+                                                    <span className="text-amber-400 text-xs font-bold">#{idx + 1}</span>
+                                                    <span className="text-white/60 text-xs ml-2">
+                                                        TP {(r.tp * 100).toFixed(2)}% / GS {(r.gs * 100).toFixed(2)}%
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`text-xs font-medium ${r.sharpe >= 1 ? 'text-emerald-400' : 'text-white/60'}`}>
+                                                        SR: {r.sharpe.toFixed(2)}
+                                                    </span>
+                                                    <button
+                                                        onClick={() => handleApplyParams(idx)}
+                                                        className="text-xs px-2 py-1 bg-white/10 rounded text-white hover:bg-white/20"
+                                                    >
+                                                        應用
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 

@@ -95,4 +95,13 @@ export const Icons = {
     Key: (props) => (
         <Icon {...props} path={<><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4" /></>} />
     ),
+    Plus: (props) => (
+        <Icon {...props} path={<><line x1="12" x2="12" y1="5" y2="19" /><line x1="5" x2="19" y1="12" y2="12" /></>} />
+    ),
+    Pause: (props) => (
+        <Icon {...props} path={<><rect width="4" height="16" x="6" y="4" /><rect width="4" height="16" x="14" y="4" /></>} />
+    ),
+    Search: (props) => (
+        <Icon {...props} path={<><circle cx="11" cy="11" r="8" /><line x1="21" x2="16.65" y1="21" y2="16.65" /></>} />
+    ),
 };

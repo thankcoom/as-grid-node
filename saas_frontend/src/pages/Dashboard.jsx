@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useI18n, LanguageToggle, Logo } from '../context/I18nContext';
 import api from '../services/api';
 import { Icons } from '../components/Icons';
+import { getWebSocketClient } from '../services/WebSocketClient';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -87,11 +88,85 @@ export default function Dashboard() {
     }
   };
 
+  // WebSocket 連線 ref
+  const wsConnectedRef = useRef(false);
+  const [wsConnected, setWsConnected] = useState(false);
+  const [logs, setLogs] = useState([]);
+
+  // 初始化 WebSocket 連線
   useEffect(() => {
+    // 首次獲取狀態
     checkNodeStatus();
-    const interval = setInterval(checkNodeStatus, 30000);
+
+    // 保留輪詢作為備用（15秒間隔，WebSocket 連線成功後會更快更新）
+    const interval = setInterval(checkNodeStatus, 15000);
     return () => clearInterval(interval);
   }, [checkNodeStatus]);
+
+  // WebSocket 連線（當 nodeData.node_url 可用時）
+  useEffect(() => {
+    if (nodeStatus !== 'connected' || !nodeData?.node_url) return;
+
+    const wsClient = getWebSocketClient();
+
+    // 註冊回調
+    wsClient.on('onConnect', () => {
+      console.log('[Dashboard] WebSocket connected');
+      setWsConnected(true);
+      wsConnectedRef.current = true;
+    });
+
+    wsClient.on('onDisconnect', () => {
+      console.log('[Dashboard] WebSocket disconnected');
+      setWsConnected(false);
+      wsConnectedRef.current = false;
+    });
+
+    wsClient.on('onAccount', (data) => {
+      setNodeData(prev => ({
+        ...prev,
+        equity: data.equity,
+        available_balance: data.available_balance,
+        unrealized_pnl: data.unrealized_pnl,
+        total_pnl: data.total_pnl || prev?.total_pnl || 0
+      }));
+      setLastUpdate(new Date());
+    });
+
+    wsClient.on('onPositions', (positions) => {
+      setNodeData(prev => ({
+        ...prev,
+        positions: positions
+      }));
+    });
+
+    wsClient.on('onIndicators', (indicators) => {
+      setNodeData(prev => ({
+        ...prev,
+        indicators: indicators
+      }));
+    });
+
+    wsClient.on('onStatus', (status) => {
+      setNodeData(prev => ({
+        ...prev,
+        is_trading: status.is_trading,
+        is_paused: status.is_paused,
+        symbols: status.symbols
+      }));
+    });
+
+    wsClient.on('onLog', (log) => {
+      setLogs(prev => [...prev.slice(-99), log.message]);
+    });
+
+    // 連線到 Grid Node
+    wsClient.connect(nodeData.node_url);
+
+    return () => {
+      wsClient.disconnect();
+    };
+  }, [nodeStatus, nodeData?.node_url]);
 
   const statusConfig = {
     checking: { icon: Icons.RefreshCw, spin: true, text: t.dashboard.checking, color: 'text-white/40', bg: 'bg-white/5' },

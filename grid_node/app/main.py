@@ -16,7 +16,7 @@ from app.core.config import settings
 from app.services.bot_manager import bot_manager
 
 # API 路由
-from app.api import coin, symbols, backtest
+from app.api import coin, symbols, backtest, websocket
 
 import logging
 
@@ -62,6 +62,7 @@ app.add_middleware(
 app.include_router(coin.router, prefix="/api/v1/coin", tags=["coin"])
 app.include_router(symbols.router, prefix="/api/v1/symbols", tags=["symbols"])
 app.include_router(backtest.router, prefix="/api/v1/backtest", tags=["backtest"])
+app.include_router(websocket.router, prefix="/api/v1", tags=["websocket"])
 
 
 async def verify_secret(x_node_secret: str = Header(...)):

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from sqlalchemy import inspect, text
 
 from app.api.api_v1.api import api_router
 from app.core.config import settings
@@ -13,6 +14,25 @@ from app import initial_data
 
 # Create tables (for dev only - use Alembic in prod)
 models.Base.metadata.create_all(bind=engine)
+
+# Auto-migrate: add missing columns to existing tables
+def auto_migrate():
+    """Add missing columns that create_all doesn't handle"""
+    inspector = inspect(engine)
+    
+    # Check node_status table for available_balance column
+    if 'node_status' in inspector.get_table_names():
+        columns = [col['name'] for col in inspector.get_columns('node_status')]
+        with engine.connect() as conn:
+            if 'available_balance' not in columns:
+                try:
+                    conn.execute(text('ALTER TABLE node_status ADD COLUMN available_balance FLOAT DEFAULT 0.0'))
+                    conn.commit()
+                    print("✅ Added available_balance column to node_status")
+                except Exception as e:
+                    print(f"⚠️ Could not add available_balance column: {e}")
+
+auto_migrate()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

@@ -75,16 +75,70 @@ class BotManager:
         
         return result
     
+    def _fetch_account_balance(self) -> Dict[str, Any]:
+        """
+        獲取帳戶餘額（不需要 bot 運行時使用）
+        
+        使用 ccxt 同步獲取 Bitget 合約帳戶餘額
+        """
+        try:
+            import ccxt
+            
+            api_key = os.getenv("EXCHANGE_API_KEY", "")
+            api_secret = os.getenv("EXCHANGE_SECRET", "")
+            passphrase = os.getenv("EXCHANGE_PASSPHRASE", "")
+            
+            if not api_key or not api_secret:
+                logger.debug("No API credentials configured")
+                return {"equity": 0, "available_balance": 0, "unrealized_pnl": 0}
+            
+            exchange = ccxt.bitget({
+                'apiKey': api_key,
+                'secret': api_secret,
+                'password': passphrase,
+                'enableRateLimit': True,
+                'options': {'defaultType': 'swap'}
+            })
+            
+            balance = exchange.fetch_balance({'type': 'swap'})
+            
+            total_equity = 0
+            total_available = 0
+            total_unrealized = 0
+            
+            for currency in ['USDT', 'USDC']:
+                if currency in balance:
+                    info = balance[currency]
+                    total_equity += float(info.get('total', 0) or 0)
+                    total_available += float(info.get('free', 0) or 0)
+                    # Bitget unrealized PnL 可能在 info 中
+                    if 'info' in info and isinstance(info['info'], dict):
+                        total_unrealized += float(info['info'].get('upl', 0) or 0)
+            
+            logger.debug(f"Fetched balance: equity={total_equity}, available={total_available}")
+            return {
+                "equity": total_equity,
+                "available_balance": total_available,
+                "unrealized_pnl": total_unrealized
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to fetch account balance: {e}")
+            return {"equity": 0, "available_balance": 0, "unrealized_pnl": 0}
+    
     def _get_heartbeat_status(self) -> Dict[str, Any]:
         """獲取心跳狀態（供 AuthClient 調用）"""
         if not self.bot:
+            # 沒有交易時，嘗試獲取帳戶餘額
+            balance_info = self._fetch_account_balance()
             return {
                 "status": "stopped",
                 "is_trading": False,
                 "is_paused": self.is_paused,
                 "total_pnl": 0,
-                "unrealized_pnl": 0,
-                "equity": 0,
+                "unrealized_pnl": balance_info.get("unrealized_pnl", 0),
+                "equity": balance_info.get("equity", 0),
+                "available_balance": balance_info.get("available_balance", 0),
                 "positions": [],
                 "symbols": [],
                 "indicators": None

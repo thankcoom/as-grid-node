@@ -57,13 +57,15 @@ export default function PendingApproval() {
 
                 {/* Contact */}
                 <div className="bg-white/[0.03] border border-white/5 rounded-xl p-5 mb-6 text-left">
-                    <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider mb-3">Need help?</p>
-                    <div className="space-y-2 text-sm">
-                        <a href="mailto:support@louislab.com" className="flex items-center gap-3 text-text-secondary hover:text-white transition-colors">
-                            <Icons.Link className="w-4 h-4" /> support@louislab.com
+                    <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider mb-3">需要協助？</p>
+                    <div className="space-y-3 text-sm">
+                        <a href="https://louis12.pse.is/8geqph" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-text-secondary hover:text-emerald-400 transition-colors">
+                            <Icons.Users className="w-4 h-4" />
+                            加入 LINE 社群
                         </a>
-                        <a href="https://t.me/louislab_support" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-text-secondary hover:text-white transition-colors">
-                            <Icons.Link className="w-4 h-4" /> Telegram: @louislab_support
+                        <a href="https://www.instagram.com/mr.__.l" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-text-secondary hover:text-pink-400 transition-colors">
+                            <Icons.Globe className="w-4 h-4" />
+                            Instagram: @mr.__.l
                         </a>
                     </div>
                 </div>

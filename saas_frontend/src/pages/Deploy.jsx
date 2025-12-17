@@ -4,57 +4,33 @@ import { useAuth } from '../context/AuthContext';
 import { useI18n, LanguageToggle } from '../context/I18nContext';
 import { Icons } from '../components/Icons';
 
-// 官方 API 伺服器 URL
-const AUTH_SERVER_URL = 'https://louisasgrid-api.zeabur.app';
+// Zeabur Template ID - 已創建: https://zeabur.com/templates/RBBWT1
+const ZEABUR_TEMPLATE_ID = 'RBBWT1';
 
-// GitHub template repo (用戶 Fork 後部署)
-const GITHUB_TEMPLATE_URL = 'https://github.com/thankcoom/bitget-as';
-
-// Zeabur 一鍵部署 URL
-const ZEABUR_DEPLOY_URL = 'https://zeabur.com/referral?referralCode=louis12';
+// Referral code
+const REFERRAL_CODE = 'louis12';
 
 export default function Deploy() {
     const { user } = useAuth();
     const { t } = useI18n();
     const navigate = useNavigate();
+    const [showAdvanced, setShowAdvanced] = useState(false);
     const [copied, setCopied] = useState(false);
 
-    // 用戶專屬環境變數
-    const userEnvVars = [
-        {
-            key: 'AUTH_SERVER_URL',
-            value: AUTH_SERVER_URL,
-            desc: '官方 API 伺服器網址（固定值）',
-            descEn: 'Official API server URL (fixed)'
-        },
-        {
-            key: 'USER_ID',
-            value: user?.id || 'your-user-id',
-            desc: '您的用戶 ID（自動填入）',
-            descEn: 'Your user ID (auto-filled)'
-        },
-        {
-            key: 'NODE_SECRET',
-            value: 'your-secret-' + (user?.id?.slice(0, 8) || 'xxxxx'),
-            desc: '節點密鑰（可自訂，請記住）',
-            descEn: 'Node secret (customizable, remember it)'
-        }
-    ];
+    // 動態生成一鍵部署 URL（包含 USER_ID）
+    const oneClickDeployUrl = `https://zeabur.com/templates/${ZEABUR_TEMPLATE_ID}?referralCode=${REFERRAL_CODE}&USER_ID=${user?.id || ''}`;
 
-    // 生成可複製的 env 格式
-    const envText = userEnvVars.map(v => `${v.key}=${v.value}`).join('\n');
-
-    const handleCopy = () => {
-        navigator.clipboard.writeText(envText);
+    // 用戶 ID 複製功能
+    const handleCopyUserId = () => {
+        navigator.clipboard.writeText(user?.id || '');
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
 
     const steps = [
-        { num: 1, title: 'Fork 程式碼', titleEn: 'Fork Code', desc: '複製到您的 GitHub', icon: Icons.Play },
-        { num: 2, title: '連接 Zeabur', titleEn: 'Connect Zeabur', desc: '一鍵部署', icon: Icons.Rocket },
-        { num: 3, title: '設定環境變數', titleEn: 'Set Env Vars', desc: '複製下方設定', icon: Icons.Settings },
-        { num: 4, title: '回填 Node URL', titleEn: 'Fill Node URL', desc: '到設定頁連接', icon: Icons.Link }
+        { num: 1, title: t.deploy.step1Title || '一鍵部署', titleEn: 'One-Click Deploy', desc: t.deploy.step1Desc || '點擊按鈕開始', icon: Icons.Rocket },
+        { num: 2, title: t.deploy.step2Title || '確認部署', titleEn: 'Confirm Deploy', desc: t.deploy.step2Desc || '在 Zeabur 確認', icon: Icons.CheckCircle },
+        { num: 3, title: t.deploy.step3Title || '連接節點', titleEn: 'Connect Node', desc: t.deploy.step3Desc || '貼上網域到設定', icon: Icons.Link }
     ];
 
     return (
@@ -79,12 +55,12 @@ export default function Deploy() {
                     </div>
                     <h2 className="text-3xl font-bold text-white mb-3">{t.deploy.heroTitle}</h2>
                     <p className="text-white/40 max-w-lg mx-auto text-[15px]">
-                        {t.deploy.heroSubtitle}
+                        {t.deploy.heroSubtitle || '只需點擊一個按鈕，即可部署您的專屬交易節點'}
                     </p>
                 </div>
 
-                {/* Steps */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+                {/* Simple Steps */}
+                <div className="grid grid-cols-3 gap-4 mb-12">
                     {steps.map((step, i) => (
                         <div
                             key={step.num}
@@ -101,122 +77,143 @@ export default function Deploy() {
                     ))}
                 </div>
 
-                {/* Step 1: Fork Code */}
-                <div className="glass-card rounded-2xl p-8 mb-6 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-                    <h3 className="text-[14px] font-semibold text-white mb-4 flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-white/10 text-white flex items-center justify-center text-[12px] font-bold">1</span>
-                        Fork 程式碼到您的 GitHub
-                    </h3>
-                    <p className="text-[13px] text-white/50 mb-4">
-                        點擊下方按鈕，將 Grid Node 程式碼複製到您的 GitHub 帳號
-                    </p>
-                    <a
-                        href={GITHUB_TEMPLATE_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn-secondary inline-flex"
-                    >
-                        <Icons.Play className="w-4 h-4" />
-                        打開 GitHub Repository
-                    </a>
-                </div>
+                {/* Main Deploy Card */}
+                <div className="bg-gradient-to-br from-white/10 to-white/5 border border-white/20 rounded-3xl p-10 mb-8 animate-fade-in text-center" style={{ animationDelay: '0.3s' }}>
+                    <div className="mb-6">
+                        <h3 className="text-2xl font-bold text-white mb-2">
+                            {t.deploy.oneClickTitle || '一鍵部署您的交易節點'}
+                        </h3>
+                        <p className="text-white/50 text-[14px]">
+                            {t.deploy.oneClickDesc || '無需任何技術背景，點擊按鈕即可完成部署'}
+                        </p>
+                    </div>
 
-                {/* Step 2: Deploy to Zeabur */}
-                <div className="glass-card rounded-2xl p-8 mb-6 animate-fade-in" style={{ animationDelay: '0.5s' }}>
-                    <h3 className="text-[14px] font-semibold text-white mb-4 flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-white/10 text-white flex items-center justify-center text-[12px] font-bold">2</span>
-                        部署到 Zeabur
-                    </h3>
-                    <p className="text-[13px] text-white/50 mb-4">
-                        連接您的 GitHub，選擇 Fork 的 repo，部署 <code className="bg-white/10 px-1.5 py-0.5 rounded text-white/80">grid_node</code> 資料夾
-                    </p>
-                    <a
-                        href={ZEABUR_DEPLOY_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn-primary inline-flex"
-                    >
-                        <img src="https://zeabur.com/button.svg" alt="" className="h-5" />
-                        {t.deploy.deployBtn}
-                    </a>
-                </div>
-
-                {/* Step 3: Environment Variables */}
-                <div className="glass-card rounded-2xl p-8 mb-6 animate-fade-in" style={{ animationDelay: '0.6s' }}>
-                    <h3 className="text-[14px] font-semibold text-white mb-4 flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-white/10 text-white flex items-center justify-center text-[12px] font-bold">3</span>
-                        <Icons.List className="w-5 h-5 text-text-muted" />
-                        設定環境變數（您的專屬設定）
-                    </h3>
-
-                    <div className="bg-black/30 rounded-xl p-4 mb-4 border border-white/10">
-                        <div className="grid gap-3">
-                            {userEnvVars.map((v) => (
-                                <div key={v.key} className="flex items-center gap-4 py-2 border-b border-white/5 last:border-0">
-                                    <code className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[13px] font-mono text-emerald-400 min-w-[180px]">
-                                        {v.key}
-                                    </code>
-                                    <code className="text-[13px] font-mono text-white/80 flex-1">
-                                        {v.value}
-                                    </code>
-                                    <span className="text-[12px] text-white/40">{v.desc}</span>
-                                </div>
-                            ))}
+                    {/* User ID Display */}
+                    <div className="bg-black/30 rounded-xl p-4 mb-6 inline-block">
+                        <p className="text-[11px] text-white/40 mb-2 uppercase tracking-wider">
+                            {t.deploy.yourUserId || '您的用戶 ID（已自動填入）'}
+                        </p>
+                        <div className="flex items-center gap-3">
+                            <code className="text-[16px] font-mono text-emerald-400">
+                                {user?.id || 'Loading...'}
+                            </code>
+                            <button
+                                onClick={handleCopyUserId}
+                                className="text-white/40 hover:text-white transition-colors"
+                                title="Copy"
+                            >
+                                {copied ? <Icons.CheckCircle className="w-4 h-4 text-emerald-400" /> : <Icons.RefreshCw className="w-4 h-4" />}
+                            </button>
                         </div>
                     </div>
 
-                    <button
-                        onClick={handleCopy}
-                        className={`btn-primary ${copied ? 'bg-emerald-500' : ''}`}
-                    >
-                        {copied ? (
-                            <>
-                                <Icons.CheckCircle className="w-4 h-4" />
-                                已複製！
-                            </>
-                        ) : (
-                            <>
-                                <Icons.RefreshCw className="w-4 h-4" />
-                                複製全部環境變數
-                            </>
-                        )}
-                    </button>
+                    {/* One-Click Deploy Button */}
+                    <div className="mb-6">
+                        <a
+                            href={oneClickDeployUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-3 px-10 py-5 bg-white text-black font-bold text-lg rounded-2xl hover:bg-white/90 transition-all shadow-lg shadow-white/20 hover:shadow-white/30 active:scale-[0.98]"
+                        >
+                            <Icons.Rocket className="w-6 h-6" />
+                            {t.deploy.oneClickBtn || '一鍵部署到 Zeabur'}
+                        </a>
+                    </div>
 
-                    <p className="text-[11px] text-white/30 mt-4">
-                        * API credentials（EXCHANGE_API_KEY 等）會在 Node 啟動時自動從官網獲取，無需手動設定
+                    <p className="text-[12px] text-white/30 flex items-center justify-center gap-2">
+                        <Icons.Shield className="w-4 h-4" />
+                        {t.deploy.securityNote || '安全加密・無需提供 API 密鑰'}
                     </p>
                 </div>
 
-                {/* Step 4: Connect Node */}
-                <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-2xl p-8 animate-fade-in" style={{ animationDelay: '0.7s' }}>
-                    <h3 className="text-[14px] font-semibold text-white mb-4 flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[12px] font-bold">4</span>
+                {/* After Deploy Instructions */}
+                <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-2xl p-8 mb-8 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                    <h3 className="text-[16px] font-semibold text-white mb-4 flex items-center gap-2">
                         <Icons.CheckCircle className="w-5 h-5 text-emerald-400" />
-                        部署完成後：回填 Node URL
+                        {t.deploy.afterDeployTitle || '部署完成後'}
                     </h3>
                     <ol className="space-y-3 text-[13px] text-white/60 mb-6">
                         <li className="flex items-start gap-3">
-                            <span className="w-5 h-5 rounded-full bg-white/10 text-white/50 text-[11px] flex items-center justify-center flex-shrink-0 font-medium">1</span>
-                            <span>在 Zeabur Dashboard 找到您部署的服務</span>
+                            <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] flex items-center justify-center flex-shrink-0 font-medium">1</span>
+                            <span>{t.deploy.afterStep1 || '等待 Zeabur 部署完成（約 1-2 分鐘）'}</span>
                         </li>
                         <li className="flex items-start gap-3">
-                            <span className="w-5 h-5 rounded-full bg-white/10 text-white/50 text-[11px] flex items-center justify-center flex-shrink-0 font-medium">2</span>
-                            <span>點擊 <strong className="text-white">Networking</strong> → <strong className="text-white">Generate Domain</strong></span>
+                            <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] flex items-center justify-center flex-shrink-0 font-medium">2</span>
+                            <span>
+                                {t.deploy.afterStep2 || '在 Zeabur 頁面複製生成的網域'}
+                                <code className="text-white/80 bg-white/5 px-1.5 py-0.5 rounded text-[12px] ml-1">xxx.zeabur.app</code>
+                            </span>
                         </li>
                         <li className="flex items-start gap-3">
-                            <span className="w-5 h-5 rounded-full bg-white/10 text-white/50 text-[11px] flex items-center justify-center flex-shrink-0 font-medium">3</span>
-                            <span>複製生成的網址（如 <code className="text-white/80 bg-white/5 px-1.5 py-0.5 rounded text-[12px]">https://grid-node-xxx.zeabur.app</code>）</span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                            <span className="w-5 h-5 rounded-full bg-white/10 text-white/50 text-[11px] flex items-center justify-center flex-shrink-0 font-medium">4</span>
-                            <span>回到官網 <strong className="text-white">設定頁面</strong>，貼上 Node URL 並儲存</span>
+                            <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] flex items-center justify-center flex-shrink-0 font-medium">3</span>
+                            <span>{t.deploy.afterStep3 || '返回本站設定頁面，貼上網域並儲存'}</span>
                         </li>
                     </ol>
                     <Link to="/settings" className="btn-success inline-flex">
-                        前往設定頁面連接節點
+                        {t.deploy.goToSettings || '前往設定頁面'}
                         <Icons.ArrowRight className="w-4 h-4" />
                     </Link>
                 </div>
+
+                {/* Advanced Options Toggle */}
+                <div className="text-center">
+                    <button
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        className="text-[13px] text-white/30 hover:text-white/60 transition-colors flex items-center gap-2 mx-auto"
+                    >
+                        {showAdvanced ? <Icons.X className="w-4 h-4" /> : <Icons.Settings className="w-4 h-4" />}
+                        {showAdvanced ? (t.deploy.hideAdvanced || '隱藏進階選項') : (t.deploy.showAdvanced || '進階用戶：手動部署')}
+                    </button>
+                </div>
+
+                {/* Advanced Options */}
+                {showAdvanced && (
+                    <div className="mt-8 glass-card rounded-2xl p-8 animate-fade-in">
+                        <h4 className="text-[14px] font-semibold text-white/60 mb-4 flex items-center gap-2">
+                            <Icons.Settings className="w-4 h-4" />
+                            {t.deploy.advancedTitle || '手動部署（進階用戶）'}
+                        </h4>
+                        <p className="text-[13px] text-white/40 mb-6">
+                            {t.deploy.advancedDesc || '如果您想自行管理程式碼，可以使用以下方式：'}
+                        </p>
+
+                        <div className="space-y-4">
+                            <div className="bg-black/20 rounded-xl p-4">
+                                <p className="text-[12px] text-white/40 mb-2">1. Fork Repository</p>
+                                <a
+                                    href="https://github.com/thankcoom/bitget-as"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[13px] text-white hover:underline flex items-center gap-2"
+                                >
+                                    <Icons.Play className="w-4 h-4" />
+                                    github.com/thankcoom/bitget-as
+                                </a>
+                            </div>
+
+                            <div className="bg-black/20 rounded-xl p-4">
+                                <p className="text-[12px] text-white/40 mb-2">2. {t.deploy.envVars || '環境變數'}</p>
+                                <div className="space-y-2 font-mono text-[12px]">
+                                    <div className="flex gap-2">
+                                        <code className="text-emerald-400">AUTH_SERVER_URL</code>
+                                        <code className="text-white/60">=</code>
+                                        <code className="text-white/80">https://louisasgrid-api.zeabur.app</code>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <code className="text-emerald-400">USER_ID</code>
+                                        <code className="text-white/60">=</code>
+                                        <code className="text-white/80">{user?.id || 'your-user-id'}</code>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <code className="text-emerald-400">NODE_SECRET</code>
+                                        <code className="text-white/60">=</code>
+                                        <code className="text-white/80">{t.deploy.autoGenerated || '（自動生成）'}</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Bottom Link */}
                 <div className="text-center mt-8">

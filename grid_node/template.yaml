@@ -4,8 +4,8 @@ metadata:
   name: Louis AS Grid Node
 spec:
   description: 自動化網格交易機器人節點 - 24/7 智能交易
-  icon: https://raw.githubusercontent.com/thankcoom/bitget-as/main/grid_node/logo.png
-  coverImage: https://raw.githubusercontent.com/thankcoom/bitget-as/main/grid_node/logo.png
+  icon: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/umami.svg
+  coverImage: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/umami.svg
   tags:
     - Trading
     - Bot
@@ -24,15 +24,25 @@ spec:
     
     此節點將連接到官方伺服器，自動獲取您的交易配置並執行網格交易。
     
+    ## 🌐 官網
+    
+    **[前往 Louis AS Grid 官網 →](https://louisasgrid.zeabur.app)**
+    
+    在官網註冊帳號、取得 User ID，並在部署完成後回到官網綁定節點。
+    
     ## 部署後操作
     1. 等待部署完成（約 1-2 分鐘）
     2. 複製生成的網域（如 `xxx.zeabur.app`）
-    3. 返回官網設定頁面，貼上網域並儲存
+    3. 返回 [官網設定頁面](https://louisasgrid.zeabur.app/settings)，貼上網域並儲存
     4. 開始交易！
     
     ## 注意事項
     - NODE_SECRET 會自動生成，請勿修改
     - 如需重新部署，請先在官網解除綁定
+    
+    ## 聯繫我們
+    - 官網：https://louisasgrid.zeabur.app
+    - 支援信箱：support@louislab.com
     
   localization:
     en:
@@ -49,15 +59,29 @@ spec:
         
         This node connects to the official server to automatically fetch your trading configuration and execute grid trading.
         
+        ## 🌐 Official Website
+        
+        **[Go to Louis AS Grid Website →](https://louisasgrid.zeabur.app)**
+        
+        Register an account on our website, get your User ID, and bind your node after deployment.
+        
         ## After Deployment
         1. Wait for deployment to complete (~1-2 minutes)
         2. Copy the generated domain (e.g., `xxx.zeabur.app`)
-        3. Return to the official Settings page, paste the domain and save
+        3. Return to [Official Settings page](https://louisasgrid.zeabur.app/settings), paste the domain and save
         4. Start trading!
+        
+        ## Notes
+        - NODE_SECRET is auto-generated, do not modify
+        - To redeploy, unbind from the official website first
+        
+        ## Contact
+        - Website: https://louisasgrid.zeabur.app
+        - Email: support@louislab.com
         
   services:
     - name: grid-node
-      icon: https://raw.githubusercontent.com/thankcoom/bitget-as/main/grid_node/logo.png
+      icon: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/umami.svg
       template: PREBUILT
       domainKey: NODE_DOMAIN
       spec:
@@ -80,6 +104,9 @@ spec:
           - type: TEXT
             title: Node URL
             content: https://${NODE_DOMAIN}
+          - type: TEXT
+            title: Official Website
+            content: https://louisasgrid.zeabur.app
           - type: PASSWORD
             title: Node Secret
             content: ${NODE_SECRET}

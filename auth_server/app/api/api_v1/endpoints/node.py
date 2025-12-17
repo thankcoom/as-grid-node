@@ -285,5 +285,6 @@ def get_my_node_status(
         "equity": node_status.equity,
         "positions": json.loads(node_status.positions) if node_status.positions else [],
         "symbols": json.loads(node_status.symbols) if node_status.symbols else [],
-        "last_heartbeat": node_status.last_heartbeat.isoformat() if node_status.last_heartbeat else None
+        "last_heartbeat": node_status.last_heartbeat.isoformat() if node_status.last_heartbeat else None,
+        "node_url": node_status.node_url
     }

@@ -101,8 +101,8 @@ export default function Settings() {
               節點狀態
             </h3>
             <span className={`px-3 py-1 rounded-full text-[12px] font-medium ${nodeStatus?.is_online
-                ? 'bg-emerald-500/20 text-emerald-400'
-                : 'bg-white/10 text-white/40'
+              ? 'bg-emerald-500/20 text-emerald-400'
+              : 'bg-white/10 text-white/40'
               }`}>
               {nodeStatus?.is_online ? '在線' : nodeStatus?.status === 'not_registered' ? '未部署' : '離線'}
             </span>
@@ -149,23 +149,28 @@ export default function Settings() {
               <label className="block text-[12px] font-medium text-white/50 mb-2 ml-1">
                 Node URL
               </label>
-              <input
-                type="text"
-                placeholder="https://your-grid-node.zeabur.app"
-                value={nodeUrl}
-                onChange={(e) => setNodeUrl(e.target.value)}
-                className="w-full h-12 bg-black/20 border border-white/10 rounded-xl px-4 text-[14px] text-white focus:outline-none focus:border-white/20 transition-all font-mono placeholder:text-white/20"
-              />
+              <div className="flex">
+                <span className="inline-flex items-center px-4 text-[14px] text-white/40 bg-black/30 border border-r-0 border-white/10 rounded-l-xl font-mono">
+                  https://
+                </span>
+                <input
+                  type="text"
+                  placeholder="your-node.zeabur.app"
+                  value={nodeUrl.replace(/^https?:\/\//, '')}
+                  onChange={(e) => setNodeUrl('https://' + e.target.value.replace(/^https?:\/\//, ''))}
+                  className="flex-1 h-12 bg-black/20 border border-white/10 rounded-r-xl px-4 text-[14px] text-white focus:outline-none focus:border-white/20 transition-all font-mono placeholder:text-white/20"
+                />
+              </div>
               <p className="text-[11px] text-white/30 mt-1.5 ml-1">
-                從 Zeabur Dashboard 的 Networking → Domains 取得
+                從 Zeabur Dashboard 的 Networking → Domains 複製網域（不需要加 https://）
               </p>
             </div>
 
             {/* Status Message */}
             {status.msg && (
               <div className={`p-4 rounded-xl text-[13px] flex items-center gap-2 ${status.type === 'success'
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                  : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                : 'bg-red-500/10 text-red-400 border border-red-500/20'
                 }`}>
                 {status.type === 'success' ? <Icons.CheckCircle className="w-4 h-4" /> : <Icons.AlertCircle className="w-4 h-4" />}
                 {status.msg}

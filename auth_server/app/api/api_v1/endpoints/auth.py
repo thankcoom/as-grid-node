@@ -67,15 +67,17 @@ async def verify_api(
 ) -> Any:
     """
     Verify Bitget API credentials and get UID.
-    User status changes from 'pending_api' to 'pending_approval'.
+    - For pending_api/rejected users: Changes status to 'pending_approval'
+    - For active users: Updates API credentials (allows changing API)
     """
     import ccxt.async_support as ccxt
     
-    # Check user status
-    if current_user.status not in ["pending_api", "rejected"]:
+    # Check if user is allowed to verify/update API
+    is_update = current_user.status == "active"
+    if current_user.status not in ["pending_api", "rejected", "active"]:
         raise HTTPException(
             status_code=400,
-            detail="API already verified or user is already active.",
+            detail="Cannot update API in current status.",
         )
     
     try:
@@ -213,23 +215,60 @@ async def verify_api(
         
         # Update user
         current_user.exchange_uid = uid
-        current_user.status = "pending_approval"
         current_user.api_verified_at = datetime.utcnow()
-        db.commit()
         
-        # 🔔 Send notification to admin
-        logger.warning(
-            f"🔔 ADMIN NOTIFICATION: New user waiting for approval!\n"
-            f"   Email: {current_user.email}\n"
-            f"   UID: {uid}\n"
-            f"   Time: {datetime.now()}"
-        )
+        # 保存加密的 API 憑證
+        from app.core import security as sec
+        encrypted_key = sec.encrypt_data(creds.api_key)
+        encrypted_secret = sec.encrypt_data(creds.api_secret)
+        encrypted_passphrase = sec.encrypt_data(creds.passphrase) if creds.passphrase else None
         
-        return schemas.VerifyAPIResponse(
-            uid=uid,
-            status="pending_approval",
-            message="Your account is pending admin approval."
-        )
+        existing_creds = db.query(models.APICredential).filter(
+            models.APICredential.user_id == current_user.id
+        ).first()
+        
+        if existing_creds:
+            existing_creds.api_key_encrypted = encrypted_key
+            existing_creds.api_secret_encrypted = encrypted_secret
+            existing_creds.passphrase_encrypted = encrypted_passphrase
+        else:
+            new_creds = models.APICredential(
+                user_id=current_user.id,
+                api_key_encrypted=encrypted_key,
+                api_secret_encrypted=encrypted_secret,
+                passphrase_encrypted=encrypted_passphrase,
+                exchange="bitget"
+            )
+            db.add(new_creds)
+        
+        # 根據用戶狀態決定下一步
+        if is_update:
+            # Active user updating API - keep status as active
+            db.commit()
+            logger.info(f"User {current_user.email} updated API credentials. UID: {uid}")
+            return schemas.VerifyAPIResponse(
+                uid=uid,
+                status="active",
+                message="API credentials updated successfully. Node will fetch new credentials on next heartbeat."
+            )
+        else:
+            # New user - change to pending_approval
+            current_user.status = "pending_approval"
+            db.commit()
+            
+            # 🔔 Send notification to admin
+            logger.warning(
+                f"🔔 ADMIN NOTIFICATION: New user waiting for approval!\n"
+                f"   Email: {current_user.email}\n"
+                f"   UID: {uid}\n"
+                f"   Time: {datetime.now()}"
+            )
+            
+            return schemas.VerifyAPIResponse(
+                uid=uid,
+                status="pending_approval",
+                message="Your account is pending admin approval."
+            )
         
     except Exception as e:
         error_msg = str(e)

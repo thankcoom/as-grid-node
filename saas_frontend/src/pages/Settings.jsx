@@ -6,15 +6,24 @@ import api from '../services/api';
 import { Icons } from '../components/Icons';
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
 
+  // Node URL 相關狀態
   const [nodeUrl, setNodeUrl] = useState('');
   const [status, setStatus] = useState({ type: 'idle', msg: '' });
   const [loading, setLoading] = useState(false);
   const [testing, setTesting] = useState(false);
   const [nodeStatus, setNodeStatus] = useState(null);
+
+  // API 更換相關狀態
+  const [showApiForm, setShowApiForm] = useState(false);
+  const [apiKey, setApiKey] = useState('');
+  const [apiSecret, setApiSecret] = useState('');
+  const [passphrase, setPassphrase] = useState('');
+  const [apiStatus, setApiStatus] = useState({ type: 'idle', msg: '' });
+  const [apiLoading, setApiLoading] = useState(false);
 
   // 取得目前 Node 狀態
   useEffect(() => {
@@ -75,6 +84,40 @@ export default function Settings() {
       setStatus({ type: 'error', msg: err.response?.data?.detail || '儲存失敗' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 更換 API
+  const handleUpdateApi = async (e) => {
+    e.preventDefault();
+
+    if (!apiKey || !apiSecret || !passphrase) {
+      setApiStatus({ type: 'error', msg: '請填寫所有欄位' });
+      return;
+    }
+
+    setApiLoading(true);
+    setApiStatus({ type: 'idle', msg: '' });
+
+    try {
+      const res = await api.post('/auth/verify_api', {
+        api_key: apiKey,
+        api_secret: apiSecret,
+        passphrase: passphrase
+      });
+
+      setApiStatus({ type: 'success', msg: `更新成功！UID: ${res.data.uid}` });
+      setShowApiForm(false);
+      setApiKey('');
+      setApiSecret('');
+      setPassphrase('');
+
+      // 刷新用戶資料
+      if (refreshUser) refreshUser();
+    } catch (err) {
+      setApiStatus({ type: 'error', msg: err.response?.data?.detail || '驗證失敗' });
+    } finally {
+      setApiLoading(false);
     }
   };
 
@@ -204,6 +247,98 @@ export default function Settings() {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* 更換 API 設定 */}
+        <div className="glass-card rounded-2xl p-8 mb-8 animate-fade-in">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white">
+                <Icons.Key className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">Bitget API 設定</h2>
+                <p className="text-[13px] text-white/40">
+                  {user?.exchange_uid ? `目前 UID: ${user.exchange_uid}` : '尚未設定 API'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowApiForm(!showApiForm)}
+              className="btn-secondary text-sm"
+            >
+              {showApiForm ? '取消' : '更換 API'}
+            </button>
+          </div>
+
+          {showApiForm && (
+            <form onSubmit={handleUpdateApi} className="space-y-4">
+              <div>
+                <label className="block text-[12px] font-medium text-white/50 mb-2 ml-1">
+                  API Key
+                </label>
+                <input
+                  type="text"
+                  placeholder="輸入 Bitget API Key"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  className="w-full h-12 bg-black/20 border border-white/10 rounded-xl px-4 text-[14px] text-white focus:outline-none focus:border-white/20 transition-all font-mono placeholder:text-white/20"
+                />
+              </div>
+              <div>
+                <label className="block text-[12px] font-medium text-white/50 mb-2 ml-1">
+                  API Secret
+                </label>
+                <input
+                  type="password"
+                  placeholder="輸入 API Secret"
+                  value={apiSecret}
+                  onChange={(e) => setApiSecret(e.target.value)}
+                  className="w-full h-12 bg-black/20 border border-white/10 rounded-xl px-4 text-[14px] text-white focus:outline-none focus:border-white/20 transition-all font-mono placeholder:text-white/20"
+                />
+              </div>
+              <div>
+                <label className="block text-[12px] font-medium text-white/50 mb-2 ml-1">
+                  Passphrase
+                </label>
+                <input
+                  type="password"
+                  placeholder="輸入 Passphrase"
+                  value={passphrase}
+                  onChange={(e) => setPassphrase(e.target.value)}
+                  className="w-full h-12 bg-black/20 border border-white/10 rounded-xl px-4 text-[14px] text-white focus:outline-none focus:border-white/20 transition-all font-mono placeholder:text-white/20"
+                />
+              </div>
+
+              {/* API Status Message */}
+              {apiStatus.msg && (
+                <div className={`p-4 rounded-xl text-[13px] flex items-center gap-2 ${apiStatus.type === 'success'
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                  : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                  }`}>
+                  {apiStatus.type === 'success' ? <Icons.CheckCircle className="w-4 h-4" /> : <Icons.AlertCircle className="w-4 h-4" />}
+                  {apiStatus.msg}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={apiLoading}
+                className="btn-primary w-full"
+              >
+                {apiLoading ? (
+                  <>
+                    <Icons.RefreshCw className="w-4 h-4 animate-spin" />
+                    驗證中...
+                  </>
+                ) : '驗證並更新 API'}
+              </button>
+
+              <p className="text-[11px] text-white/30 text-center">
+                更新後，您的交易節點將在下次心跳時自動獲取新的 API 憑證
+              </p>
+            </form>
+          )}
         </div>
 
         {/* 尚未部署提示 */}

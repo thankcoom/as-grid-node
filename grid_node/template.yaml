@@ -1,68 +1,86 @@
 apiVersion: zeabur.com/v1
 kind: Template
 metadata:
-  name: AS Grid Trading Node
-  description: |
-    Personal grid trading node for AS Grid system.
-    Deploy your own trading bot that connects to Bitget exchange.
-  icon: https://raw.githubusercontent.com/louislab/as-grid/main/assets/icon.png
-  
+  name: Louis AS Grid Node
 spec:
+  description: 自動化網格交易機器人節點 - 24/7 智能交易
+  icon: https://raw.githubusercontent.com/thankcoom/bitget-as/main/grid_node/logo.png
+  coverImage: https://raw.githubusercontent.com/thankcoom/bitget-as/main/grid_node/logo.png
+  tags:
+    - Trading
+    - Bot
+    - Crypto
+  variables:
+    - key: USER_ID
+      type: STRING
+      name: 用戶 ID
+      description: 從官網 Deploy 頁面複製（已自動填入）
+    - key: NODE_DOMAIN
+      type: DOMAIN
+      name: 節點網域
+      description: 為您的交易節點選擇一個網域
+  readme: |
+    # Louis AS Grid Node
+    
+    此節點將連接到官方伺服器，自動獲取您的交易配置並執行網格交易。
+    
+    ## 部署後操作
+    1. 等待部署完成（約 1-2 分鐘）
+    2. 複製生成的網域（如 `xxx.zeabur.app`）
+    3. 返回官網設定頁面，貼上網域並儲存
+    4. 開始交易！
+    
+    ## 注意事項
+    - NODE_SECRET 會自動生成，請勿修改
+    - 如需重新部署，請先在官網解除綁定
+    
+  localization:
+    en:
+      description: Automated grid trading bot node - 24/7 smart trading
+      variables:
+        - key: USER_ID
+          name: User ID
+          description: Copy from the official Deploy page (auto-filled)
+        - key: NODE_DOMAIN
+          name: Node Domain
+          description: Choose a domain for your trading node
+      readme: |
+        # Louis AS Grid Node
+        
+        This node connects to the official server to automatically fetch your trading configuration and execute grid trading.
+        
+        ## After Deployment
+        1. Wait for deployment to complete (~1-2 minutes)
+        2. Copy the generated domain (e.g., `xxx.zeabur.app`)
+        3. Return to the official Settings page, paste the domain and save
+        4. Start trading!
+        
   services:
     - name: grid-node
-      icon: https://raw.githubusercontent.com/louislab/as-grid/main/assets/icon.png
-      template: GIT
-      git:
-        url: https://github.com/louislab/as-grid-node
-        branch: main
-        buildType: DOCKERFILE
-      
-      # Exposed ports
-      ports:
-        - id: api
-          port: 8000
-          type: HTTP
-      
-      # Environment variables
-      env:
-        # Connection Secret
-        - key: NODE_SECRET
-          description: "連線密鑰（自行設定，用於驗證連線）"
-          required: true
-          example: "my-secret-key-123"
-        
-        # Bitget API Configuration  
-        - key: EXCHANGE_API_KEY
-          description: "Bitget API Key"
-          required: true
-        
-        - key: EXCHANGE_SECRET
-          description: "Bitget API Secret"
-          required: true
-          
-        - key: EXCHANGE_PASSPHRASE
-          description: "Bitget Passphrase（API 創建時設定的）"
-          required: true
-        
-        # Trading Configuration
-        - key: DEFAULT_SYMBOL
-          description: "預設交易對（如 BTCUSDT）"
-          required: false
-          default: "BTCUSDT"
-          
-        - key: LOG_LEVEL
-          description: "日誌級別"
-          required: false
-          default: "INFO"
-          
-      # Resource limits
-      resources:
-        cpu: 0.5
-        memory: 512Mi
-        
-      # Health check
-      healthcheck:
-        path: /health
-        port: 8000
-        interval: 30s
-        timeout: 10s
+      icon: https://raw.githubusercontent.com/thankcoom/bitget-as/main/grid_node/logo.png
+      template: PREBUILT
+      domainKey: NODE_DOMAIN
+      spec:
+        source:
+          image: ghcr.io/thankcoom/as-grid-node:latest
+        ports:
+          - id: web
+            port: 8000
+            type: HTTP
+        env:
+          AUTH_SERVER_URL:
+            default: https://louisasgrid-api.zeabur.app
+            readonly: true
+          USER_ID:
+            default: ${USER_ID}
+          NODE_SECRET:
+            default: ${PASSWORD}
+            expose: true
+        instructions:
+          - type: TEXT
+            title: Node URL
+            content: https://${NODE_DOMAIN}
+          - type: PASSWORD
+            title: Node Secret
+            content: ${NODE_SECRET}
+            category: Credentials

@@ -53,6 +53,82 @@ async def get_node_url(user_id: str, db: Session) -> tuple[str, str]:
     return node_status.node_url, node_secret
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# 具體路由必須放在 catch-all 路由之前！
+# ═══════════════════════════════════════════════════════════════════════════
+
+@router.post("/node/url")
+async def set_node_url(
+    node_url: str,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_user)
+):
+    """
+    設定用戶的 Node URL
+    
+    Node 在 Zeabur 部署後，需要設定 URL 才能代理
+    """
+    # 確保 URL 有 https:// 前綴
+    if not node_url.startswith('http'):
+        node_url = 'https://' + node_url
+    
+    # 獲取或創建 NodeStatus
+    node_status = db.query(models.NodeStatus).filter(
+        models.NodeStatus.user_id == current_user.id
+    ).first()
+    
+    if not node_status:
+        node_status = models.NodeStatus(user_id=current_user.id)
+        db.add(node_status)
+    
+    node_status.node_url = node_url
+    db.commit()
+    
+    logger.info(f"Set Node URL for user {current_user.email}: {node_url}")
+    
+    return {"status": "ok", "node_url": node_url}
+
+
+@router.get("/node/test")
+async def test_node_connection(
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_user)
+):
+    """
+    測試 Node 連接
+    """
+    try:
+        node_url, node_secret = await get_node_url(current_user.id, db)
+        
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(
+                f"{node_url}/api/v1/health",
+                headers={"X-Node-Secret": node_secret}
+            )
+        
+        if response.status_code == 200:
+            return {
+                "status": "connected",
+                "node_url": node_url,
+                "node_response": response.json()
+            }
+        else:
+            return {
+                "status": "error",
+                "node_url": node_url,
+                "error": f"Node returned {response.status_code}"
+            }
+    
+    except HTTPException as e:
+        return {"status": "not_configured", "error": e.detail}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Catch-all 代理路由 - 必須放在最後！
+# ═══════════════════════════════════════════════════════════════════════════
+
 @router.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy_to_node(
     path: str,
@@ -108,67 +184,3 @@ async def proxy_to_node(
     except Exception as e:
         logger.error(f"Proxy error: {e}")
         raise HTTPException(500, f"Proxy error: {str(e)}")
-
-
-@router.post("/node/url")
-async def set_node_url(
-    node_url: str,
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
-):
-    """
-    設定用戶的 Node URL
-    
-    Node 在 Zeabur 部署後，需要設定 URL 才能代理
-    """
-    # 獲取或創建 NodeStatus
-    node_status = db.query(models.NodeStatus).filter(
-        models.NodeStatus.user_id == current_user.id
-    ).first()
-    
-    if not node_status:
-        node_status = models.NodeStatus(user_id=current_user.id)
-        db.add(node_status)
-    
-    node_status.node_url = node_url
-    db.commit()
-    
-    logger.info(f"Set Node URL for user {current_user.email}: {node_url}")
-    
-    return {"status": "ok", "node_url": node_url}
-
-
-@router.get("/node/test")
-async def test_node_connection(
-    db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_user)
-):
-    """
-    測試 Node 連接
-    """
-    try:
-        node_url, node_secret = await get_node_url(current_user.id, db)
-        
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(
-                f"{node_url}/api/v1/health",
-                headers={"X-Node-Secret": node_secret}
-            )
-        
-        if response.status_code == 200:
-            return {
-                "status": "connected",
-                "node_url": node_url,
-                "node_response": response.json()
-            }
-        else:
-            return {
-                "status": "error",
-                "node_url": node_url,
-                "error": f"Node returned {response.status_code}"
-            }
-    
-    except HTTPException as e:
-        return {"status": "not_configured", "error": e.detail}
-    except Exception as e:
-        return {"status": "error", "error": str(e)}

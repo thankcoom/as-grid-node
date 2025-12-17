@@ -1,20 +1,20 @@
 {
     "service": {
-        "name": "as-grid-node",
+        "name": "grid-node",
         "dockerfile": "Dockerfile",
         "env": {
             "AUTH_SERVER_URL": {
-                "description": "Official API server URL (fixed)",
-                "default": "https://louisasgrid-api.zeabur.app",
+                "description": "AS Grid 官方服務器 (自動設定)",
+                "default": "https://louisasgrid.zeabur.app",
                 "required": true
             },
             "USER_ID": {
-                "description": "Your user ID from the official website Deploy page",
+                "description": "您在 Deploy 頁面看到的用戶 ID",
                 "required": true
             },
             "NODE_SECRET": {
-                "description": "Node secret key (customizable, remember it)",
-                "random": true
+                "description": "節點密鑰 (自動生成，可自訂)",
+                "default": "default_insecure_secret"
             }
         }
     }

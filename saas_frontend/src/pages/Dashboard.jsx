@@ -418,6 +418,35 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Trading Log Panel - Real-time via WebSocket */}
+        {nodeStatus === 'connected' && nodeData && nodeData.is_trading && (
+          <div className="glass-card rounded-2xl p-8 animate-fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[16px] font-semibold text-white flex items-center gap-2">
+                <Icons.Terminal className="w-5 h-5" />
+                交易日誌
+              </h3>
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+                <span className="text-[11px] text-white/40">
+                  {wsConnected ? '即時連線' : '連線中...'}
+                </span>
+              </div>
+            </div>
+            <div className="bg-black/30 rounded-lg p-4 h-48 overflow-y-auto font-mono text-[12px]">
+              {logs.length === 0 ? (
+                <p className="text-white/30">等待交易日誌...</p>
+              ) : (
+                logs.map((log, idx) => (
+                  <p key={idx} className="text-white/60 leading-relaxed">
+                    {log}
+                  </p>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Quick Links */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Link to="/deploy" className="glass-card rounded-xl p-4 text-center hover:bg-white/5 transition-colors group">

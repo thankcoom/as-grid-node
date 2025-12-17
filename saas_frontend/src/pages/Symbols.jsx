@@ -221,7 +221,7 @@ export default function Symbols() {
                                         <td className="px-4 py-4">
                                             {scores[sym.symbol]?.score !== undefined ? (
                                                 <span className={`text-sm font-medium ${scores[sym.symbol].score >= 70 ? 'text-emerald-400' :
-                                                        scores[sym.symbol].score >= 50 ? 'text-amber-400' : 'text-white/60'
+                                                    scores[sym.symbol].score >= 50 ? 'text-amber-400' : 'text-white/60'
                                                     }`}>
                                                     {scores[sym.symbol].score?.toFixed(1) || '-'}
                                                 </span>
@@ -270,6 +270,20 @@ export default function Symbols() {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex gap-2 justify-end">
+                                                <Link
+                                                    to={`/backtest?symbol=${sym.symbol}`}
+                                                    className="p-2 text-white/40 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors"
+                                                    title="30日回測"
+                                                >
+                                                    <Icons.BarChart2 className="w-4 h-4" />
+                                                </Link>
+                                                <Link
+                                                    to={`/backtest?symbol=${sym.symbol}&optimize=true`}
+                                                    className="p-2 text-white/40 hover:text-purple-400 hover:bg-purple-500/10 rounded-lg transition-colors"
+                                                    title="智能優化"
+                                                >
+                                                    <Icons.Zap className="w-4 h-4" />
+                                                </Link>
                                                 <button
                                                     onClick={() => setEditingSymbol(sym)}
                                                     className="p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-lg transition-colors"

@@ -252,30 +252,70 @@ export default function Dashboard() {
           </div>
 
           {nodeStatus === 'connected' && nodeData && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-black/20 rounded-xl p-4">
-                <p className="text-[11px] text-white/40 mb-1">帳戶權益</p>
-                <p className="text-xl font-bold text-white">
-                  ${(nodeData.equity || 0).toFixed(2)}
-                </p>
+            <div className="space-y-4">
+              {/* USDC/USDT Split Display - Like GUI */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* USDC Account */}
+                <div className="bg-black/20 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[13px] font-semibold text-white">USDC</span>
+                    <span className="text-[11px] text-white/40">合約帳戶</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-[12px]">
+                    <div>
+                      <p className="text-white/40 mb-0.5">權益</p>
+                      <p className="font-medium text-white">${(nodeData.usdc_equity || nodeData.equity || 0).toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <p className="text-white/40 mb-0.5">可用</p>
+                      <p className="font-medium text-emerald-400">${(nodeData.usdc_available || nodeData.available_balance || 0).toFixed(2)}</p>
+                    </div>
+                  </div>
+                </div>
+                {/* USDT Account */}
+                <div className="bg-black/20 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[13px] font-semibold text-white">USDT</span>
+                    <span className="text-[11px] text-white/40">合約帳戶</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-[12px]">
+                    <div>
+                      <p className="text-white/40 mb-0.5">權益</p>
+                      <p className="font-medium text-white">${(nodeData.usdt_equity || 0).toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <p className="text-white/40 mb-0.5">可用</p>
+                      <p className="font-medium text-emerald-400">${(nodeData.usdt_available || 0).toFixed(2)}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="bg-black/20 rounded-xl p-4">
-                <p className="text-[11px] text-white/40 mb-1">可用保證金</p>
-                <p className="text-xl font-bold text-emerald-400">
-                  ${(nodeData.available_balance || 0).toFixed(2)}
-                </p>
-              </div>
-              <div className="bg-black/20 rounded-xl p-4">
-                <p className="text-[11px] text-white/40 mb-1">{t.dashboard.totalPnl}</p>
-                <p className={`text-xl font-bold ${(nodeData.total_pnl || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  ${(nodeData.total_pnl || 0).toFixed(2)}
-                </p>
-              </div>
-              <div className="bg-black/20 rounded-xl p-4">
-                <p className="text-[11px] text-white/40 mb-1">浮動盈虧</p>
-                <p className={`text-xl font-bold ${(nodeData.unrealized_pnl || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  ${(nodeData.unrealized_pnl || 0).toFixed(2)}
-                </p>
+              {/* Summary Row */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-black/20 rounded-xl p-4">
+                  <p className="text-[11px] text-white/40 mb-1">總權益</p>
+                  <p className="text-xl font-bold text-white">
+                    ${(nodeData.equity || 0).toFixed(2)}
+                  </p>
+                </div>
+                <div className="bg-black/20 rounded-xl p-4">
+                  <p className="text-[11px] text-white/40 mb-1">總可用</p>
+                  <p className="text-xl font-bold text-emerald-400">
+                    ${(nodeData.available_balance || 0).toFixed(2)}
+                  </p>
+                </div>
+                <div className="bg-black/20 rounded-xl p-4">
+                  <p className="text-[11px] text-white/40 mb-1">{t.dashboard.totalPnl}</p>
+                  <p className={`text-xl font-bold ${(nodeData.total_pnl || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    ${(nodeData.total_pnl || 0).toFixed(2)}
+                  </p>
+                </div>
+                <div className="bg-black/20 rounded-xl p-4">
+                  <p className="text-[11px] text-white/40 mb-1">浮動盈虧</p>
+                  <p className={`text-xl font-bold ${(nodeData.unrealized_pnl || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    ${(nodeData.unrealized_pnl || 0).toFixed(2)}
+                  </p>
+                </div>
               </div>
             </div>
           )}
@@ -315,8 +355,8 @@ export default function Dashboard() {
                     <span className="text-[13px] font-mono text-white">{formatRuntime(runtime)}</span>
                   </div>
                   <span className={`px-2.5 py-1 rounded-full text-[11px] font-medium ${nodeData.is_paused
-                      ? 'bg-amber-500/20 text-amber-400'
-                      : 'bg-emerald-500/20 text-emerald-400'
+                    ? 'bg-amber-500/20 text-amber-400'
+                    : 'bg-emerald-500/20 text-emerald-400'
                     }`}>
                     {nodeData.is_paused ? '暫停中' : '運行中'}
                   </span>

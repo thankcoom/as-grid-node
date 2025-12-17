@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { useI18n, LanguageToggle, Logo } from '../context/I18nContext';
 import { Icons } from '../components/Icons';
 
 export default function Login() {
   const { t } = useI18n();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,23 +18,16 @@ export default function Login() {
     setError('');
 
     if (!email || !password) {
-      setError(t.settings.fieldsRequired || 'Please fill in all fields'); // strict t check
+      setError(t.settings.fieldsRequired || 'Please fill in all fields');
       return;
     }
 
     setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append('username', email);
-      formData.append('password', password);
+      // Use AuthContext.login() to properly update user state
+      const { status } = await login(email, password);
 
-      // We need to resolve import. I'll maintain existing import style for now to avoid breakage, 
-      // but if Admin.jsx worked, maybe both work?
-      // I'll stick to what the file had: `import api` (default).
-      const res = await api.post('/auth/login', formData);
-      localStorage.setItem('token', res.data.access_token);
-
-      if (res.data.status === 'pending_api') {
+      if (status === 'pending_api') {
         navigate('/setup-api');
       } else {
         navigate('/dashboard');

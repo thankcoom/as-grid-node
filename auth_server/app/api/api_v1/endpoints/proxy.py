@@ -23,9 +23,14 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-async def get_node_url(user_id: str, db: Session) -> tuple[str, str]:
+async def get_node_url(user_id: str, db: Session, allow_offline: bool = False) -> tuple[str, str]:
     """
     獲取用戶的 Node URL 和 Secret
+    
+    Args:
+        user_id: 用戶 ID
+        db: 資料庫 session
+        allow_offline: 是否允許離線節點（測試連接時使用）
     
     Returns:
         (node_url, node_secret)
@@ -40,10 +45,11 @@ async def get_node_url(user_id: str, db: Session) -> tuple[str, str]:
     if not node_status.node_url:
         raise HTTPException(404, "Node URL not configured")
     
-    # 檢查是否在線
-    if node_status.last_heartbeat:
-        offline_threshold = datetime.utcnow() - timedelta(minutes=5)
+    # 檢查是否在線（放寬到 10 分鐘，並可以跳過）
+    if not allow_offline and node_status.last_heartbeat:
+        offline_threshold = datetime.utcnow() - timedelta(minutes=10)
         if node_status.last_heartbeat < offline_threshold:
+            logger.warning(f"Node appears offline. Last heartbeat: {node_status.last_heartbeat}")
             raise HTTPException(503, "Node appears to be offline")
     
     # Node Secret 存儲在環境變數中，或者使用用戶特定的 secret
@@ -95,10 +101,11 @@ async def test_node_connection(
     current_user: models.User = Depends(deps.get_current_user)
 ):
     """
-    測試 Node 連接
+    測試 Node 連接（忽略心跳狀態，直接測試實際連接）
     """
     try:
-        node_url, node_secret = await get_node_url(current_user.id, db)
+        # 允許離線狀態，因為我們會直接測試
+        node_url, node_secret = await get_node_url(current_user.id, db, allow_offline=True)
         
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(

@@ -136,6 +136,7 @@ class NodeStatus(Base):
     total_pnl = Column(Float, default=0.0)
     unrealized_pnl = Column(Float, default=0.0)
     equity = Column(Float, default=0.0)
+    available_balance = Column(Float, default=0.0)
     
     # 持倉資訊 (JSON)
     positions = Column(Text, nullable=True)

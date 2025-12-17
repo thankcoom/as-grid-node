@@ -47,6 +47,7 @@ class HeartbeatRequest(BaseModel):
     total_pnl: float = 0.0
     unrealized_pnl: float = 0.0
     equity: float = 0.0
+    available_balance: float = 0.0
     positions: List[dict] = []
     symbols: List[str] = []
     timestamp: Optional[str] = None
@@ -173,6 +174,7 @@ def node_heartbeat(
     node_status.total_pnl = req.total_pnl
     node_status.unrealized_pnl = req.unrealized_pnl
     node_status.equity = req.equity
+    node_status.available_balance = req.available_balance
     node_status.positions = json.dumps(req.positions)
     node_status.symbols = json.dumps(req.symbols)
     node_status.last_heartbeat = datetime.utcnow()
@@ -247,6 +249,7 @@ def get_node_status(
         "total_pnl": node_status.total_pnl,
         "unrealized_pnl": node_status.unrealized_pnl,
         "equity": node_status.equity,
+        "available_balance": node_status.available_balance,
         "positions": json.loads(node_status.positions) if node_status.positions else [],
         "symbols": json.loads(node_status.symbols) if node_status.symbols else [],
         "last_heartbeat": node_status.last_heartbeat.isoformat() if node_status.last_heartbeat else None,
@@ -283,6 +286,7 @@ def get_my_node_status(
         "total_pnl": node_status.total_pnl,
         "unrealized_pnl": node_status.unrealized_pnl,
         "equity": node_status.equity,
+        "available_balance": node_status.available_balance,
         "positions": json.loads(node_status.positions) if node_status.positions else [],
         "symbols": json.loads(node_status.symbols) if node_status.symbols else [],
         "last_heartbeat": node_status.last_heartbeat.isoformat() if node_status.last_heartbeat else None,

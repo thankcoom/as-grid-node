@@ -149,27 +149,27 @@ export default function Dashboard() {
           {nodeStatus === 'connected' && nodeData && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-black/20 rounded-xl p-4">
+                <p className="text-[11px] text-white/40 mb-1">帳戶權益</p>
+                <p className="text-xl font-bold text-white">
+                  ${(nodeData.equity || 0).toFixed(2)}
+                </p>
+              </div>
+              <div className="bg-black/20 rounded-xl p-4">
+                <p className="text-[11px] text-white/40 mb-1">可用保證金</p>
+                <p className="text-xl font-bold text-emerald-400">
+                  ${(nodeData.available_balance || 0).toFixed(2)}
+                </p>
+              </div>
+              <div className="bg-black/20 rounded-xl p-4">
                 <p className="text-[11px] text-white/40 mb-1">{t.dashboard.totalPnl}</p>
                 <p className={`text-xl font-bold ${(nodeData.total_pnl || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                   ${(nodeData.total_pnl || 0).toFixed(2)}
                 </p>
               </div>
               <div className="bg-black/20 rounded-xl p-4">
-                <p className="text-[11px] text-white/40 mb-1">{t.dashboard.equity}</p>
-                <p className="text-xl font-bold text-white">
-                  ${(nodeData.equity || 0).toFixed(2)}
-                </p>
-              </div>
-              <div className="bg-black/20 rounded-xl p-4">
-                <p className="text-[11px] text-white/40 mb-1">{t.dashboard.tradingStatus}</p>
-                <p className={`text-lg font-bold ${nodeData.is_trading ? 'text-emerald-400' : 'text-white/60'}`}>
-                  {nodeData.is_trading ? t.dashboard.running : t.dashboard.stopped}
-                </p>
-              </div>
-              <div className="bg-black/20 rounded-xl p-4">
-                <p className="text-[11px] text-white/40 mb-1">{t.dashboard.lastUpdate}</p>
-                <p className="text-[13px] text-white/60">
-                  {nodeData.last_heartbeat ? new Date(nodeData.last_heartbeat).toLocaleTimeString() : '-'}
+                <p className="text-[11px] text-white/40 mb-1">浮動盈虧</p>
+                <p className={`text-xl font-bold ${(nodeData.unrealized_pnl || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  ${(nodeData.unrealized_pnl || 0).toFixed(2)}
                 </p>
               </div>
             </div>
@@ -310,7 +310,7 @@ export default function Dashboard() {
               <div className="bg-black/20 rounded-xl p-4">
                 <p className="text-[11px] text-white/40 mb-1">Funding Rate</p>
                 <p className={`text-lg font-bold ${(nodeData.indicators.funding_rate || 0) > 0 ? 'text-emerald-400' :
-                    (nodeData.indicators.funding_rate || 0) < 0 ? 'text-red-400' : 'text-white/60'
+                  (nodeData.indicators.funding_rate || 0) < 0 ? 'text-red-400' : 'text-white/60'
                   }`}>
                   {((nodeData.indicators.funding_rate || 0) * 100).toFixed(4)}%
                 </p>
@@ -319,7 +319,7 @@ export default function Dashboard() {
               <div className="bg-black/20 rounded-xl p-4">
                 <p className="text-[11px] text-white/40 mb-1">OFI</p>
                 <p className={`text-lg font-bold ${(nodeData.indicators.ofi_value || 0) > 0.3 ? 'text-emerald-400' :
-                    (nodeData.indicators.ofi_value || 0) < -0.3 ? 'text-red-400' : 'text-white/60'
+                  (nodeData.indicators.ofi_value || 0) < -0.3 ? 'text-red-400' : 'text-white/60'
                   }`}>
                   {(nodeData.indicators.ofi_value || 0).toFixed(2)}
                 </p>

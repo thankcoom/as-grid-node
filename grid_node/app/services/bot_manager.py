@@ -105,10 +105,10 @@ class BotManager:
             })
             symbols.append(sym_state.symbol)
         
-        # 計算總權益
-        equity = 0
-        for acc in state.accounts.values():
-            equity += getattr(acc, 'equity', 0)
+        # 計算總權益 - 優先使用 state 已計算的值
+        state.update_totals()  # 確保 totals 是最新的
+        equity = getattr(state, 'total_equity', 0)
+        available_balance = getattr(state, 'free_balance', 0)
         
         # 獲取指標數據
         indicators = self._get_indicators_data()
@@ -118,8 +118,9 @@ class BotManager:
             "is_trading": self.is_trading,
             "is_paused": self.is_paused,
             "total_pnl": state.total_profit,
-            "unrealized_pnl": sum(p.get("unrealized_pnl", 0) for p in positions),
+            "unrealized_pnl": getattr(state, 'total_unrealized_pnl', 0),
             "equity": equity,
+            "available_balance": available_balance,
             "positions": positions,
             "symbols": symbols,
             "indicators": indicators

@@ -20,12 +20,13 @@ export default function CoinSelection() {
     const [error, setError] = useState(null);
     const [scanTime, setScanTime] = useState(null);
     const [selectedCoin, setSelectedCoin] = useState(null);
+    const [topN, setTopN] = useState(20); // Top N filter
 
     const handleScan = useCallback(async (forceRefresh = false) => {
         setLoading(true);
         setError(null);
         try {
-            const result = await coinApi.scan({ forceRefresh, limit: 20 });
+            const result = await coinApi.scan({ forceRefresh, limit: topN });
             setRankings(result.rankings || []);
             setScanTime(result.elapsed_seconds);
         } catch (err) {
@@ -33,7 +34,7 @@ export default function CoinSelection() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [topN]);
 
     const handleAddToSymbols = async (coin) => {
         try {
@@ -98,7 +99,19 @@ export default function CoinSelection() {
                             掃描全部合約，找出最適合網格交易的幣種
                         </p>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 items-center">
+                        {/* Top N Filter */}
+                        <select
+                            value={topN}
+                            onChange={(e) => setTopN(parseInt(e.target.value))}
+                            className="px-3 py-2.5 glass-card rounded-xl text-[13px] text-white bg-transparent border border-white/10 focus:border-white/30 outline-none"
+                        >
+                            <option value="10" className="bg-gray-900">Top 10</option>
+                            <option value="20" className="bg-gray-900">Top 20</option>
+                            <option value="30" className="bg-gray-900">Top 30</option>
+                            <option value="50" className="bg-gray-900">Top 50</option>
+                            <option value="100" className="bg-gray-900">全部</option>
+                        </select>
                         <button
                             onClick={() => handleScan(false)}
                             disabled={loading}

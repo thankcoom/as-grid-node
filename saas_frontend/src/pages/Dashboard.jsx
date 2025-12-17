@@ -92,6 +92,36 @@ export default function Dashboard() {
   const wsConnectedRef = useRef(false);
   const [wsConnected, setWsConnected] = useState(false);
   const [logs, setLogs] = useState([]);
+  const [runtime, setRuntime] = useState(0);
+  const runtimeRef = useRef(null);
+
+  // 格式化運行時間
+  const formatRuntime = (seconds) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  // 運行時間計時器
+  useEffect(() => {
+    if (nodeData?.is_trading) {
+      runtimeRef.current = setInterval(() => {
+        setRuntime(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (runtimeRef.current) {
+        clearInterval(runtimeRef.current);
+        runtimeRef.current = null;
+      }
+      setRuntime(0);
+    }
+    return () => {
+      if (runtimeRef.current) {
+        clearInterval(runtimeRef.current);
+      }
+    };
+  }, [nodeData?.is_trading]);
 
   // 初始化 WebSocket 連線
   useEffect(() => {
@@ -273,10 +303,26 @@ export default function Dashboard() {
         {/* Control Panel - Only show when connected */}
         {nodeStatus === 'connected' && nodeData && (
           <div className="glass-card rounded-2xl p-8 animate-fade-in">
-            <h3 className="text-[16px] font-semibold text-white mb-6 flex items-center gap-2">
-              <Icons.Zap className="w-5 h-5" />
-              {t.dashboard.controlPanel}
-            </h3>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-[16px] font-semibold text-white flex items-center gap-2">
+                <Icons.Zap className="w-5 h-5" />
+                {t.dashboard.controlPanel}
+              </h3>
+              {nodeData.is_trading && (
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 bg-black/20 rounded-lg px-3 py-1.5">
+                    <Icons.Clock className="w-4 h-4 text-white/40" />
+                    <span className="text-[13px] font-mono text-white">{formatRuntime(runtime)}</span>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-full text-[11px] font-medium ${nodeData.is_paused
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'bg-emerald-500/20 text-emerald-400'
+                    }`}>
+                    {nodeData.is_paused ? '暫停中' : '運行中'}
+                  </span>
+                </div>
+              )}
+            </div>
             {/* Main Controls */}
             <div className="flex gap-4 mb-4">
               <button

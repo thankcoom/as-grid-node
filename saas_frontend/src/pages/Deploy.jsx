@@ -17,8 +17,13 @@ export default function Deploy() {
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [copied, setCopied] = useState(false);
 
+    // Check if user ID is available
+    const hasValidUserId = user?.id && user.id.length > 10;
+
     // 動態生成一鍵部署 URL（包含 USER_ID）
-    const oneClickDeployUrl = `https://zeabur.com/templates/${ZEABUR_TEMPLATE_ID}?referralCode=${REFERRAL_CODE}&USER_ID=${user?.id || ''}`;
+    const oneClickDeployUrl = hasValidUserId
+        ? `https://zeabur.com/templates/${ZEABUR_TEMPLATE_ID}?referralCode=${REFERRAL_CODE}&USER_ID=${user.id}`
+        : null;
 
     // 用戶 ID 複製功能
     const handleCopyUserId = () => {
@@ -94,30 +99,48 @@ export default function Deploy() {
                             {t.deploy.yourUserId || '您的用戶 ID（已自動填入）'}
                         </p>
                         <div className="flex items-center gap-3">
-                            <code className="text-[16px] font-mono text-emerald-400">
-                                {user?.id || 'Loading...'}
-                            </code>
-                            <button
-                                onClick={handleCopyUserId}
-                                className="text-white/40 hover:text-white transition-colors"
-                                title="Copy"
-                            >
-                                {copied ? <Icons.CheckCircle className="w-4 h-4 text-emerald-400" /> : <Icons.RefreshCw className="w-4 h-4" />}
-                            </button>
+                            {hasValidUserId ? (
+                                <>
+                                    <code className="text-[16px] font-mono text-emerald-400">
+                                        {user.id}
+                                    </code>
+                                    <button
+                                        onClick={handleCopyUserId}
+                                        className="text-white/40 hover:text-white transition-colors"
+                                        title="Copy"
+                                    >
+                                        {copied ? <Icons.CheckCircle className="w-4 h-4 text-emerald-400" /> : <Icons.RefreshCw className="w-4 h-4" />}
+                                    </button>
+                                </>
+                            ) : (
+                                <span className="text-[14px] text-amber-400">
+                                    請先登入以獲取您的用戶 ID
+                                </span>
+                            )}
                         </div>
                     </div>
 
                     {/* One-Click Deploy Button */}
                     <div className="mb-6">
-                        <a
-                            href={oneClickDeployUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-3 px-10 py-5 bg-white text-black font-bold text-lg rounded-2xl hover:bg-white/90 transition-all shadow-lg shadow-white/20 hover:shadow-white/30 active:scale-[0.98]"
-                        >
-                            <Icons.Rocket className="w-6 h-6" />
-                            {t.deploy.oneClickBtn || '一鍵部署到 Zeabur'}
-                        </a>
+                        {hasValidUserId ? (
+                            <a
+                                href={oneClickDeployUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-3 px-10 py-5 bg-white text-black font-bold text-lg rounded-2xl hover:bg-white/90 transition-all shadow-lg shadow-white/20 hover:shadow-white/30 active:scale-[0.98]"
+                            >
+                                <Icons.Rocket className="w-6 h-6" />
+                                {t.deploy.oneClickBtn || '一鍵部署到 Zeabur'}
+                            </a>
+                        ) : (
+                            <button
+                                onClick={() => navigate('/login')}
+                                className="inline-flex items-center gap-3 px-10 py-5 bg-amber-500 text-black font-bold text-lg rounded-2xl hover:bg-amber-400 transition-all"
+                            >
+                                <Icons.LogOut className="w-6 h-6" />
+                                請先登入
+                            </button>
+                        )}
                     </div>
 
                     <p className="text-[12px] text-white/30 flex items-center justify-center gap-2">

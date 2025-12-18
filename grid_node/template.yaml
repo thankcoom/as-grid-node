@@ -11,10 +11,10 @@ spec:
     - Bot
     - Crypto
   variables:
-    - key: USER_ID
+    - key: BITGET_UID
       type: STRING
-      name: 用戶 ID
-      description: 從官網 Deploy 頁面複製（已自動填入）
+      name: Bitget UID
+      description: 您的 Bitget Exchange UID（從官網 Deploy 頁面複製）
     - key: NODE_DOMAIN
       type: DOMAIN
       name: 節點網域
@@ -28,7 +28,7 @@ spec:
     
     **[前往 Louis AS Grid 官網 →](https://louisasgrid.zeabur.app)**
     
-    在官網註冊帳號、取得 User ID，並在部署完成後回到官網綁定節點。
+    在官網註冊帳號、驗證 Bitget API，並在部署完成後回到官網綁定節點。
     
     ## 部署後操作
     1. 等待部署完成（約 1-2 分鐘）
@@ -37,6 +37,7 @@ spec:
     4. 開始交易！
     
     ## 注意事項
+    - BITGET_UID 是您的 Bitget 帳戶 ID（10 位數字）
     - NODE_SECRET 會自動生成，請勿修改
     - 如需重新部署，請先在官網解除綁定
     
@@ -48,9 +49,9 @@ spec:
     en:
       description: Automated grid trading bot node - 24/7 smart trading
       variables:
-        - key: USER_ID
-          name: User ID
-          description: Copy from the official Deploy page (auto-filled)
+        - key: BITGET_UID
+          name: Bitget UID
+          description: Your Bitget Exchange UID (copy from the official Deploy page)
         - key: NODE_DOMAIN
           name: Node Domain
           description: Choose a domain for your trading node
@@ -93,10 +94,10 @@ spec:
             type: HTTP
         env:
           AUTH_SERVER_URL:
-            default: https://louisasgrid-api.zeabur.app
+            default: https://louisasgrid.zeabur.app
             readonly: true
-          USER_ID:
-            default: ${USER_ID}
+          BITGET_UID:
+            default: ${BITGET_UID}
           NODE_SECRET:
             default: ${PASSWORD}
             expose: true
@@ -107,6 +108,9 @@ spec:
           - type: TEXT
             title: Official Website
             content: https://louisasgrid.zeabur.app
+          - type: TEXT
+            title: Bitget UID
+            content: ${BITGET_UID}
           - type: PASSWORD
             title: Node Secret
             content: ${NODE_SECRET}

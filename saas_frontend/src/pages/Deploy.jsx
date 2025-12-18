@@ -17,17 +17,19 @@ export default function Deploy() {
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [copied, setCopied] = useState(false);
 
-    // Check if user ID is available
-    const hasValidUserId = user?.id && user.id.length > 10;
+    // 使用 Bitget UID (exchange_uid) 而非 System UUID
+    // Bitget UID 是 10 位數字，更容易記住
+    const bitgetUid = user?.exchange_uid;
+    const hasValidBitgetUid = bitgetUid && bitgetUid.length >= 8;
 
-    // 動態生成一鍵部署 URL（包含 USER_ID）
-    const oneClickDeployUrl = hasValidUserId
-        ? `https://zeabur.com/templates/${ZEABUR_TEMPLATE_ID}?referralCode=${REFERRAL_CODE}&USER_ID=${user.id}`
+    // 動態生成一鍵部署 URL（包含 BITGET_UID）
+    const oneClickDeployUrl = hasValidBitgetUid
+        ? `https://zeabur.com/templates/${ZEABUR_TEMPLATE_ID}?referralCode=${REFERRAL_CODE}&BITGET_UID=${bitgetUid}`
         : null;
 
-    // 用戶 ID 複製功能
-    const handleCopyUserId = () => {
-        navigator.clipboard.writeText(user?.id || '');
+    // Bitget UID 複製功能
+    const handleCopyBitgetUid = () => {
+        navigator.clipboard.writeText(bitgetUid || '');
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
@@ -93,19 +95,19 @@ export default function Deploy() {
                         </p>
                     </div>
 
-                    {/* User ID Display */}
+                    {/* Bitget UID Display */}
                     <div className="bg-black/30 rounded-xl p-4 mb-6 inline-block">
                         <p className="text-[11px] text-white/40 mb-2 uppercase tracking-wider">
-                            {t.deploy.yourUserId || '您的用戶 ID（已自動填入）'}
+                            {t.deploy.yourBitgetUid || '您的 Bitget UID'}
                         </p>
                         <div className="flex items-center gap-3">
-                            {hasValidUserId ? (
+                            {hasValidBitgetUid ? (
                                 <>
-                                    <code className="text-[16px] font-mono text-emerald-400">
-                                        {user.id}
+                                    <code className="text-[20px] font-mono text-emerald-400 font-bold">
+                                        {bitgetUid}
                                     </code>
                                     <button
-                                        onClick={handleCopyUserId}
+                                        onClick={handleCopyBitgetUid}
                                         className="text-white/40 hover:text-white transition-colors"
                                         title="Copy"
                                     >
@@ -114,15 +116,20 @@ export default function Deploy() {
                                 </>
                             ) : (
                                 <span className="text-[14px] text-amber-400">
-                                    請先登入以獲取您的用戶 ID
+                                    {user ? '請先驗證 Bitget API 以獲取您的 UID' : '請先登入'}
                                 </span>
                             )}
                         </div>
+                        {hasValidBitgetUid && (
+                            <p className="text-[11px] text-white/30 mt-2">
+                                這是您的 Bitget 帳戶 ID，部署時會自動填入
+                            </p>
+                        )}
                     </div>
 
                     {/* One-Click Deploy Button */}
                     <div className="mb-6">
-                        {hasValidUserId ? (
+                        {hasValidBitgetUid ? (
                             <a
                                 href={oneClickDeployUrl}
                                 target="_blank"
@@ -132,6 +139,14 @@ export default function Deploy() {
                                 <Icons.Rocket className="w-6 h-6" />
                                 {t.deploy.oneClickBtn || '一鍵部署到 Zeabur'}
                             </a>
+                        ) : user ? (
+                            <button
+                                onClick={() => navigate('/setup-api')}
+                                className="inline-flex items-center gap-3 px-10 py-5 bg-amber-500 text-black font-bold text-lg rounded-2xl hover:bg-amber-400 transition-all"
+                            >
+                                <Icons.Settings className="w-6 h-6" />
+                                前往驗證 Bitget API
+                            </button>
                         ) : (
                             <button
                                 onClick={() => navigate('/login')}

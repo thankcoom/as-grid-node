@@ -49,10 +49,10 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS - Allow frontend to connect from any origin
+# CORS - Use configurable origins from settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

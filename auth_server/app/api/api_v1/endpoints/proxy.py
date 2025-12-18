@@ -52,9 +52,10 @@ async def get_node_url(user_id: str, db: Session, allow_offline: bool = False) -
             logger.warning(f"Node appears offline. Last heartbeat: {node_status.last_heartbeat}")
             raise HTTPException(503, "Node appears to be offline")
     
-    # Node Secret 存儲在環境變數中，或者使用用戶特定的 secret
-    # 這裡暫時使用全局 secret
-    node_secret = settings.DEFAULT_NODE_SECRET if hasattr(settings, 'DEFAULT_NODE_SECRET') else "default"
+    # Node Secret - must be configured in environment
+    if not hasattr(settings, 'DEFAULT_NODE_SECRET') or not settings.DEFAULT_NODE_SECRET:
+        raise HTTPException(500, "Server configuration error: DEFAULT_NODE_SECRET not set")
+    node_secret = settings.DEFAULT_NODE_SECRET
     
     return node_status.node_url, node_secret
 

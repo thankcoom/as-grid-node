@@ -496,7 +496,7 @@ export default function Admin() {
                                         {users.length === 0 ? (
                                             <tr>
                                                 <td colSpan="5" className="px-6 py-12 text-center text-white/20">
-                                                    No users found
+                                                    {t.admin.noUsersFound}
                                                 </td>
                                             </tr>
                                         ) : (
@@ -530,7 +530,7 @@ export default function Admin() {
                                                             <button
                                                                 onClick={() => openEditUser(user)}
                                                                 className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
-                                                                title="Edit User"
+                                                                title={t.admin.editUser}
                                                             >
                                                                 <Icons.Edit className="w-4 h-4" />
                                                             </button>
@@ -552,7 +552,7 @@ export default function Admin() {
                                 {/* Pagination Controls */}
                                 <div className="px-6 py-4 border-t border-white/5 flex items-center justify-between">
                                     <div className="text-xs text-white/40">
-                                        Showing {Math.min(pageSize, users.length)} of {totalUsers} users
+                                        {t.admin.showingUsers} {Math.min(pageSize, users.length)} {t.admin.ofUsers} {totalUsers} {t.admin.usersLabel}
                                     </div>
                                     <div className="flex gap-2">
                                         <button
@@ -560,17 +560,17 @@ export default function Admin() {
                                             disabled={page === 1}
                                             className="px-3 py-1.5 rounded-lg bg-white/5 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition-colors text-xs"
                                         >
-                                            Prev
+                                            {t.admin.prev}
                                         </button>
                                         <div className="px-3 py-1.5 text-xs text-white font-mono">
-                                            Page {page}
+                                            {t.admin.page} {page}
                                         </div>
                                         <button
                                             onClick={() => setPage(p => p + 1)}
                                             disabled={page * pageSize >= totalUsers}
                                             className="px-3 py-1.5 rounded-lg bg-white/5 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/10 transition-colors text-xs"
                                         >
-                                            Next
+                                            {t.admin.next}
                                         </button>
                                     </div>
                                 </div>
@@ -586,7 +586,7 @@ export default function Admin() {
                                     onClick={() => setShowAddGroup(true)}
                                     className="px-4 py-2 bg-white text-black rounded-xl text-sm font-bold hover:bg-white/90 transition-all flex items-center gap-2"
                                 >
-                                    <span>+</span> {t.admin.addGroup || 'Add Group'}
+                                    <span>+</span> {t.admin.addGroup}
                                 </button>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -716,7 +716,7 @@ export default function Admin() {
             {showAssignGroup && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
                     <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-                        <h3 className="text-lg font-bold text-white mb-4">{t.admin.assignGroup || 'Assign Group'}</h3>
+                        <h3 className="text-lg font-bold text-white mb-4">{t.admin.assignGroup}</h3>
                         <div className="mb-4 text-sm text-white/60">
                             User: <span className="text-white">{selectedUser?.email}</span>
                         </div>
@@ -728,7 +728,7 @@ export default function Admin() {
                                     onChange={e => setSelectedGroupId(e.target.value)}
                                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/20"
                                 >
-                                    <option value="">No Group</option>
+                                    <option value="">{t.admin.noGroup}</option>
                                     {groups.map(g => (
                                         <option key={g.id} value={g.id}>{g.name}</option>
                                     ))}
@@ -758,7 +758,7 @@ export default function Admin() {
             {showEditUser && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
                     <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-                        <h3 className="text-lg font-bold text-white mb-4">Edit User</h3>
+                        <h3 className="text-lg font-bold text-white mb-4">{t.admin.editUser}</h3>
                         <div className="mb-4 text-xs text-white/40">ID: {editUserData.id}</div>
                         <form onSubmit={handleEditUser} className="space-y-4">
                             <div>

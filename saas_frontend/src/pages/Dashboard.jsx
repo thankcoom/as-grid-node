@@ -201,7 +201,7 @@ export default function Dashboard() {
   const statusConfig = {
     checking: { icon: Icons.RefreshCw, spin: true, text: t.dashboard.checking, color: 'text-white/40', bg: 'bg-white/5' },
     connected: { icon: Icons.Check, text: t.dashboard.connected, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-    offline: { icon: Icons.Clock, text: '節點離線', color: 'text-amber-400', bg: 'bg-amber-500/10' },
+    offline: { icon: Icons.Clock, text: t.dashboard.nodeOffline, color: 'text-amber-400', bg: 'bg-amber-500/10' },
     not_configured: { icon: Icons.AlertCircle, text: t.dashboard.notConfigured, color: 'text-amber-400', bg: 'bg-amber-500/10' },
     error: { icon: Icons.X, text: t.dashboard.error, color: 'text-red-400', bg: 'bg-red-500/10' }
   };
@@ -259,15 +259,15 @@ export default function Dashboard() {
                 <div className="bg-black/20 rounded-xl p-4">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-[13px] font-semibold text-white">USDC</span>
-                    <span className="text-[11px] text-white/40">合約帳戶</span>
+                    <span className="text-[11px] text-white/40">{t.dashboard.futuresAccount}</span>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-[12px]">
                     <div>
-                      <p className="text-white/40 mb-0.5">權益</p>
+                      <p className="text-white/40 mb-0.5">{t.dashboard.equity}</p>
                       <p className="font-medium text-white">${(nodeData.usdc_equity || nodeData.equity || 0).toFixed(2)}</p>
                     </div>
                     <div>
-                      <p className="text-white/40 mb-0.5">可用</p>
+                      <p className="text-white/40 mb-0.5">{t.dashboard.available}</p>
                       <p className="font-medium text-emerald-400">${(nodeData.usdc_available || nodeData.available_balance || 0).toFixed(2)}</p>
                     </div>
                   </div>
@@ -276,7 +276,7 @@ export default function Dashboard() {
                 <div className="bg-black/20 rounded-xl p-4">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-[13px] font-semibold text-white">USDT</span>
-                    <span className="text-[11px] text-white/40">合約帳戶</span>
+                    <span className="text-[11px] text-white/40">{t.dashboard.futuresAccount}</span>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-[12px]">
                     <div>
@@ -358,7 +358,7 @@ export default function Dashboard() {
                     ? 'bg-amber-500/20 text-amber-400'
                     : 'bg-emerald-500/20 text-emerald-400'
                     }`}>
-                    {nodeData.is_paused ? '暫停中' : '運行中'}
+                    {nodeData.is_paused ? t.dashboard.paused : t.dashboard.running}
                   </span>
                 </div>
               )}
@@ -371,7 +371,7 @@ export default function Dashboard() {
                 className="btn-primary flex-1"
               >
                 {actionLoading ? (
-                  <><Icons.RefreshCw className="w-4 h-4 animate-spin" /> 處理中...</>
+                  <><Icons.RefreshCw className="w-4 h-4 animate-spin" /> {t.dashboard.processing}</>
                 ) : (
                   <><Icons.Play className="w-4 h-4" /> {t.dashboard.startTrading}</>
                 )}
@@ -397,9 +397,9 @@ export default function Dashboard() {
                     }`}
                 >
                   {nodeData.is_paused ? (
-                    <><Icons.Play className="w-4 h-4" /> 恢復補倉</>
+                    <><Icons.Play className="w-4 h-4" /> {t.dashboard.resumeRefill}</>
                   ) : (
-                    <><Icons.Pause className="w-4 h-4" /> 暫停補倉</>
+                    <><Icons.Pause className="w-4 h-4" /> {t.dashboard.pauseRefill}</>
                   )}
                 </button>
                 <button
@@ -408,7 +408,7 @@ export default function Dashboard() {
                   className="flex-1 px-4 py-2.5 rounded-lg font-medium text-[13px] bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all flex items-center justify-center gap-2"
                 >
                   <Icons.X className="w-4 h-4" />
-                  一鍵平倉
+                  {t.dashboard.closeAll}
                 </button>
               </div>
             )}
@@ -420,16 +420,16 @@ export default function Dashboard() {
           <div className="glass-card rounded-2xl p-8 animate-fade-in">
             <h3 className="text-[16px] font-semibold text-white mb-6 flex items-center gap-2">
               <Icons.TrendingUp className="w-5 h-5" />
-              持倉列表
+              {t.dashboard.positions}
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="text-[11px] text-white/40 border-b border-white/10">
-                    <th className="text-left py-2 px-2">交易對</th>
-                    <th className="text-right py-2 px-2">多頭</th>
-                    <th className="text-right py-2 px-2">空頭</th>
-                    <th className="text-right py-2 px-2">浮盈</th>
+                    <th className="text-left py-2 px-2">{t.dashboard.pair}</th>
+                    <th className="text-right py-2 px-2">{t.dashboard.long}</th>
+                    <th className="text-right py-2 px-2">{t.dashboard.short}</th>
+                    <th className="text-right py-2 px-2">{t.dashboard.unrealizedPnl}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -464,7 +464,7 @@ export default function Dashboard() {
           <div className="glass-card rounded-2xl p-8 animate-fade-in">
             <h3 className="text-[16px] font-semibold text-white mb-6 flex items-center gap-2">
               <Icons.BarChart2 className="w-5 h-5" />
-              交易指標
+              {t.dashboard.indicators}
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {/* Funding Rate */}
@@ -495,7 +495,7 @@ export default function Dashboard() {
               </div>
               {/* Total Positions */}
               <div className="bg-black/20 rounded-xl p-4">
-                <p className="text-[11px] text-white/40 mb-1">總持倉</p>
+                <p className="text-[11px] text-white/40 mb-1">{t.dashboard.totalPositions}</p>
                 <p className="text-lg font-bold text-white">
                   {nodeData.indicators.total_positions || 0}
                 </p>
@@ -510,18 +510,18 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[16px] font-semibold text-white flex items-center gap-2">
                 <Icons.Terminal className="w-5 h-5" />
-                交易日誌
+                {t.dashboard.tradingLog}
               </h3>
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-400' : 'bg-amber-400'}`} />
                 <span className="text-[11px] text-white/40">
-                  {wsConnected ? '即時連線' : '連線中...'}
+                  {wsConnected ? t.dashboard.realtime : t.dashboard.connecting}
                 </span>
               </div>
             </div>
             <div className="bg-black/30 rounded-lg p-4 h-48 overflow-y-auto font-mono text-[12px]">
               {logs.length === 0 ? (
-                <p className="text-white/30">等待交易日誌...</p>
+                <p className="text-white/30">{t.dashboard.waitingForLogs}</p>
               ) : (
                 logs.map((log, idx) => (
                   <p key={idx} className="text-white/60 leading-relaxed">
@@ -545,11 +545,11 @@ export default function Dashboard() {
           </Link>
           <Link to="/coins" className="glass-card rounded-xl p-4 text-center hover:bg-white/5 transition-colors group">
             <Icons.TrendingUp className="w-6 h-6 mx-auto mb-2 text-white/40 group-hover:text-white transition-colors" />
-            <p className="text-[13px] text-white/60 group-hover:text-white">{t.nav.coins || '選幣'}</p>
+            <p className="text-[13px] text-white/60 group-hover:text-white">{t.dashboard.coins}</p>
           </Link>
           <Link to="/backtest" className="glass-card rounded-xl p-4 text-center hover:bg-white/5 transition-colors group">
             <Icons.BarChart2 className="w-6 h-6 mx-auto mb-2 text-white/40 group-hover:text-white transition-colors" />
-            <p className="text-[13px] text-white/60 group-hover:text-white">{t.nav.backtest || '回測'}</p>
+            <p className="text-[13px] text-white/60 group-hover:text-white">{t.dashboard.backtest}</p>
           </Link>
         </div>
       </main>

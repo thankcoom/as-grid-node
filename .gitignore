@@ -12,3 +12,7 @@ as_grid.db
 !AS_Grid_Trading_Bitget.spec
 asBack/data/
 asBack/output/
+node_modules/
+.env
+.env.*
+! .env.example

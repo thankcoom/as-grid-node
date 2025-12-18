@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { useI18n, LanguageToggle, Logo } from '../context/I18nContext';
@@ -13,6 +13,15 @@ export default function Register() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  // Real-time password validation
+  const passwordValidation = useMemo(() => ({
+    minLength: password.length >= 8,
+    hasUppercase: /[A-Z]/.test(password),
+    hasNumber: /[0-9]/.test(password),
+  }), [password]);
+
+  const isPasswordValid = passwordValidation.minLength && passwordValidation.hasUppercase && passwordValidation.hasNumber;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -22,8 +31,8 @@ export default function Register() {
       return;
     }
 
-    if (password.length < 8) {
-      setError(t.auth.passwordMin || 'Password must be at least 8 characters');
+    if (!isPasswordValid) {
+      setError(t.auth.passwordRequirements || 'Password does not meet requirements');
       return;
     }
 
@@ -38,7 +47,6 @@ export default function Register() {
       const formData = new FormData();
       formData.append('username', email);
       formData.append('password', password);
-      // Assuming api.post works with { api } import
       const loginRes = await api.post('/auth/login', formData);
       localStorage.setItem('token', loginRes.data.access_token);
       navigate('/setup-api');
@@ -111,6 +119,23 @@ export default function Register() {
               placeholder={t.auth.passwordMin}
               autoComplete="new-password"
             />
+            {/* Password Requirements Checklist */}
+            {password.length > 0 && (
+              <div className="mt-2 space-y-1 text-[11px] ml-1">
+                <div className={`flex items-center gap-1.5 ${passwordValidation.minLength ? 'text-emerald-400' : 'text-white/40'}`}>
+                  {passwordValidation.minLength ? <Icons.Check className="w-3 h-3" /> : <Icons.X className="w-3 h-3" />}
+                  <span>{t.auth.passwordMin}</span>
+                </div>
+                <div className={`flex items-center gap-1.5 ${passwordValidation.hasUppercase ? 'text-emerald-400' : 'text-white/40'}`}>
+                  {passwordValidation.hasUppercase ? <Icons.Check className="w-3 h-3" /> : <Icons.X className="w-3 h-3" />}
+                  <span>{t.auth.passwordUppercase}</span>
+                </div>
+                <div className={`flex items-center gap-1.5 ${passwordValidation.hasNumber ? 'text-emerald-400' : 'text-white/40'}`}>
+                  {passwordValidation.hasNumber ? <Icons.Check className="w-3 h-3" /> : <Icons.X className="w-3 h-3" />}
+                  <span>{t.auth.passwordNumber}</span>
+                </div>
+              </div>
+            )}
           </div>
 
           <div>

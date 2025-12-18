@@ -42,5 +42,10 @@ class Settings(BaseSettings):
                 "⚠️  WARNING: Using default ENCRYPTION_KEY! Set ENCRYPTION_KEY environment variable in production!",
                 UserWarning
             )
+        if "insecure" in self.DEFAULT_NODE_SECRET.lower():
+            warnings.warn(
+                "⚠️  WARNING: Using default NODE_SECRET! Set DEFAULT_NODE_SECRET environment variable in production!",
+                UserWarning
+            )
 
 settings = Settings()

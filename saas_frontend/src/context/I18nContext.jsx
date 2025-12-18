@@ -296,7 +296,7 @@ const translations = {
             back: 'Back',
             verify: 'Verify & Submit',
             verifying: 'Verifying...',
-            securityNote: 'We only use your API to verify your UID. Credentials are not stored.'
+            securityNote: 'Your credentials are encrypted and securely stored for your trading node.'
         },
         rejected: {
             title: 'Access Denied',
@@ -598,7 +598,7 @@ const translations = {
             back: '上一步',
             verify: '驗證並提交',
             verifying: '驗證中...',
-            securityNote: '我們僅使用 API 驗證您的 UID，不會儲存您的憑證。'
+            securityNote: '您的憑證將加密儲存，供交易節點安全使用。'
         },
         rejected: {
             title: '存取被拒絕',

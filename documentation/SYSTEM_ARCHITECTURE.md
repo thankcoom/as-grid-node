@@ -124,12 +124,20 @@ bitget_as/
 
 ## 🌐 URL 和 API 端點
 
-### 官方服務端
+### 官方服務端 - 生產環境
 
-| 環境 | 前端 URL | 後端 URL |
+| 服務 | URL | 說明 |
 | :--- | :--- | :--- |
-| 生產環境 | https://louisasgrid.zeabur.app | https://louisasgrid.zeabur.app/api/v1 |
-| 開發環境 | http://localhost:5173 | http://localhost:8000/api/v1 |
+| **Frontend（前端）** | https://louisasgrid-web.zeabur.app | 用戶網站 |
+| **Auth Server（後端 API）** | https://louisasgrid.zeabur.app | 後端 API |
+| **API 文檔** | https://louisasgrid.zeabur.app/docs | Swagger UI |
+
+### 開發環境
+
+| 服務 | URL |
+| :--- | :--- |
+| Frontend | http://localhost:5173 |
+| Auth Server | http://localhost:8000 |
 
 ### 後端 API 端點
 

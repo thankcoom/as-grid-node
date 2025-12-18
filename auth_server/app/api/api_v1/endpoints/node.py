@@ -96,6 +96,7 @@ def register_node(
     # 獲取並解密 API 憑證（可選 - 如果失敗則 credentials = None）
     credentials = None
     if user.credentials:
+        logger.info(f"User {user.email} has credentials stored, attempting decryption...")
         try:
             from cryptography.fernet import Fernet, InvalidToken
             # 嘗試使用 ENCRYPTION_KEY 解密
@@ -112,9 +113,13 @@ def register_node(
                 "api_secret": api_secret,
                 "passphrase": passphrase
             }
+            logger.info(f"Successfully decrypted credentials for user {user.email}")
         except (InvalidToken, ValueError, Exception) as e:
             # 解密失敗不阻止註冊，只是沒有憑證
-            logger.warning(f"Could not decrypt credentials (this is OK if API not set): {e}")
+            logger.error(f"DECRYPTION FAILED for user {user.email}: {e}")
+            logger.error(f"ENCRYPTION_KEY starts with: {settings.ENCRYPTION_KEY[:20]}...")
+    else:
+        logger.warning(f"User {user.email} has NO credentials stored in database!")
     
     # 創建或更新 NodeStatus
     node_status = db.query(models.NodeStatus).filter(

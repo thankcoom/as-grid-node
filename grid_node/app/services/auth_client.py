@@ -23,7 +23,6 @@ class AuthClient:
         self,
         auth_server_url: str = None,
         bitget_uid: str = None,
-        user_id: str = None,  # 兼容舊版
         node_secret: str = None,
         heartbeat_interval: int = 30
     ):
@@ -32,17 +31,12 @@ class AuthClient:
         
         Args:
             auth_server_url: 官方伺服器 URL (從環境變數讀取)
-            bitget_uid: Bitget Exchange UID (推薦，從環境變數讀取)
-            user_id: System UUID (兼容舊版，從環境變數讀取)
+            bitget_uid: Bitget Exchange UID (從環境變數讀取)
             node_secret: Node 密鑰 (從環境變數讀取)
             heartbeat_interval: 心跳間隔（秒）
         """
         self.auth_server_url = auth_server_url or os.getenv("AUTH_SERVER_URL", "")
-        
-        # 優先使用 BITGET_UID，兼容 USER_ID
         self.bitget_uid = bitget_uid or os.getenv("BITGET_UID", "")
-        self.user_id = user_id or os.getenv("USER_ID", "")
-        
         self.node_secret = node_secret or os.getenv("NODE_SECRET", "")
         self.heartbeat_interval = heartbeat_interval
         
@@ -88,39 +82,27 @@ class AuthClient:
         """
         向官方伺服器註冊 Node，獲取 API 憑證
         
-        支援兩種識別方式：
-        1. BITGET_UID: Bitget Exchange UID（推薦，更簡單）
-        2. USER_ID: System UUID（兼容舊版）
+        使用 BITGET_UID 識別用戶
         
         Returns:
             成功時返回 API 憑證字典，失敗返回 None
         """
-        # 檢查是否有識別碼
         if not self.auth_server_url:
             logger.warning("AUTH_SERVER_URL not configured, running in standalone mode")
             return None
         
-        if not self.bitget_uid and not self.user_id:
-            logger.warning("Neither BITGET_UID nor USER_ID configured, running in standalone mode")
+        if not self.bitget_uid:
+            logger.warning("BITGET_UID not configured, running in standalone mode")
             return None
         
-        # 構建註冊請求
-        register_data = {
+        logger.info(f"Registering with Auth Server: {self.auth_server_url}")
+        logger.info(f"Using Bitget UID: {self.bitget_uid}")
+        
+        result = await self._request("POST", "/node/register", {
+            "bitget_uid": self.bitget_uid,
             "node_secret": self.node_secret,
             "node_version": "1.0.0"
-        }
-        
-        # 優先使用 bitget_uid
-        if self.bitget_uid:
-            register_data["bitget_uid"] = self.bitget_uid
-            logger.info(f"Registering with Auth Server using Bitget UID: {self.bitget_uid}")
-        else:
-            register_data["user_id"] = self.user_id
-            logger.info(f"Registering with Auth Server using System UUID: {self.user_id}")
-        
-        logger.info(f"Auth Server URL: {self.auth_server_url}")
-        
-        result = await self._request("POST", "/node/register", register_data)
+        })
         
         if "error" in result:
             logger.error(f"Registration failed: {result['error']}")

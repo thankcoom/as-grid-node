@@ -247,26 +247,17 @@ sequenceDiagram
 
 | 識別碼 | 格式 | 來源 | 用途 |
 | :--- | :--- | :--- | :--- |
-| **Bitget UID** | 數字 (6167312609) | Bitget API | ✅ **主要識別碼** - Node 部署 |
-| **System User ID** | UUID (a1b2c3d4-...) | 系統生成 | 內部識別（不再用於部署） |
+| **Bitget UID** | 數字 (6167312609) | Bitget API | ✅ **Node 部署識別碼** |
+| **System User ID** | UUID | 系統生成 | 內部資料庫識別（不對外使用） |
 | **Email** | 字串 | 用戶輸入 | 登入識別 |
 
-### ✅ 已實作改進（v2.0）
+### 環境變數設定
 
-**現在使用 Bitget UID 作為 Node 部署的主要識別碼**：
-
-**優點**：
-- 用戶不需要複製/貼上複雜的 UUID
-- Bitget UID 是 10 位數字，更短更直觀
-- 不會重複（由 Bitget 保證唯一）
-
-**環境變數**：
 ```bash
-# 新版（推薦）
+# Grid Node 必填環境變數
+AUTH_SERVER_URL=https://louisasgrid.zeabur.app
 BITGET_UID=6167312609
-
-# 舊版（仍支援）
-USER_ID=a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+NODE_SECRET=your_secret_here
 ```
 
 ---

@@ -30,9 +30,7 @@ router = APIRouter()
 # ═══════════════════════════════════════════════════════════════════════════
 
 class NodeRegisterRequest(BaseModel):
-    # 支援兩種識別方式：優先使用 bitget_uid（更簡單），兼容舊的 user_id
-    bitget_uid: Optional[str] = None  # Bitget Exchange UID (推薦)
-    user_id: Optional[str] = None     # System UUID (兼容舊版)
+    bitget_uid: str  # Bitget Exchange UID (必填)
     node_secret: str
     node_version: str = "1.0.0"
 
@@ -79,42 +77,20 @@ def register_node(
     """
     Node 註冊端點
     
-    支援兩種識別方式：
-    1. bitget_uid: Bitget Exchange UID（推薦，更簡單）
-    2. user_id: System UUID（兼容舊版）
-    
-    返回：
-    1. JWT token 供後續認證
-    2. 解密的 API 憑證
+    使用 Bitget UID 識別用戶，返回 API 憑證
     """
-    user = None
+    # 使用 bitget_uid 查找用戶
+    user = db.query(models.User).filter(
+        models.User.exchange_uid == req.bitget_uid
+    ).first()
     
-    # 優先使用 bitget_uid 查找用戶
-    if req.bitget_uid:
-        user = db.query(models.User).filter(
-            models.User.exchange_uid == req.bitget_uid
-        ).first()
-        if not user:
-            raise HTTPException(
-                status_code=404, 
-                detail=f"No user found with Bitget UID: {req.bitget_uid}"
-            )
-        logger.info(f"Node register using Bitget UID: {req.bitget_uid}")
-    
-    # 兼容舊版 user_id
-    elif req.user_id:
-        user = db.query(models.User).filter(
-            models.User.id == req.user_id
-        ).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        logger.info(f"Node register using System UUID: {req.user_id}")
-    
-    else:
+    if not user:
         raise HTTPException(
-            status_code=400, 
-            detail="Either bitget_uid or user_id must be provided"
+            status_code=404, 
+            detail=f"No user found with Bitget UID: {req.bitget_uid}. Please verify your Bitget API first."
         )
+    
+    logger.info(f"Node register for Bitget UID: {req.bitget_uid}, User: {user.email}")
     
     # 驗證用戶狀態
     if user.status != "active":

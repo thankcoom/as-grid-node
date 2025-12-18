@@ -106,25 +106,52 @@ class BotManager:
             total_available = 0
             total_unrealized = 0
             
+            # 分離追蹤 USDT 和 USDC 餘額
+            usdt_equity = 0
+            usdt_available = 0
+            usdc_equity = 0
+            usdc_available = 0
+            
             for currency in ['USDT', 'USDC']:
                 if currency in balance:
                     info = balance[currency]
-                    total_equity += float(info.get('total', 0) or 0)
-                    total_available += float(info.get('free', 0) or 0)
+                    equity = float(info.get('total', 0) or 0)
+                    available = float(info.get('free', 0) or 0)
+                    
+                    total_equity += equity
+                    total_available += available
+                    
+                    # 分開儲存
+                    if currency == 'USDT':
+                        usdt_equity = equity
+                        usdt_available = available
+                    else:
+                        usdc_equity = equity
+                        usdc_available = available
+                    
                     # Bitget unrealized PnL 可能在 info 中
                     if 'info' in info and isinstance(info['info'], dict):
                         total_unrealized += float(info['info'].get('upl', 0) or 0)
             
-            logger.debug(f"Fetched balance: equity={total_equity}, available={total_available}")
+            logger.debug(f"Fetched balance: USDT={usdt_equity}, USDC={usdc_equity}, total={total_equity}")
             return {
                 "equity": total_equity,
                 "available_balance": total_available,
-                "unrealized_pnl": total_unrealized
+                "unrealized_pnl": total_unrealized,
+                # 新增：分離的 USDT/USDC 餘額
+                "usdt_equity": usdt_equity,
+                "usdt_available": usdt_available,
+                "usdc_equity": usdc_equity,
+                "usdc_available": usdc_available
             }
             
         except Exception as e:
             logger.error(f"Failed to fetch account balance: {e}")
-            return {"equity": 0, "available_balance": 0, "unrealized_pnl": 0}
+            return {
+                "equity": 0, "available_balance": 0, "unrealized_pnl": 0,
+                "usdt_equity": 0, "usdt_available": 0,
+                "usdc_equity": 0, "usdc_available": 0
+            }
     
     def _get_heartbeat_status(self) -> Dict[str, Any]:
         """獲取心跳狀態（供 AuthClient 調用）"""
@@ -139,6 +166,11 @@ class BotManager:
                 "unrealized_pnl": balance_info.get("unrealized_pnl", 0),
                 "equity": balance_info.get("equity", 0),
                 "available_balance": balance_info.get("available_balance", 0),
+                # 新增：分離的 USDT/USDC 餘額
+                "usdt_equity": balance_info.get("usdt_equity", 0),
+                "usdt_available": balance_info.get("usdt_available", 0),
+                "usdc_equity": balance_info.get("usdc_equity", 0),
+                "usdc_available": balance_info.get("usdc_available", 0),
                 "positions": [],
                 "symbols": [],
                 "indicators": None

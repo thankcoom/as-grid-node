@@ -135,6 +135,12 @@ class AuthClient:
             "total_pnl": status.get("total_pnl", 0),
             "unrealized_pnl": status.get("unrealized_pnl", 0),
             "equity": status.get("equity", 0),
+            "available_balance": status.get("available_balance", 0),
+            # 分離的 USDT/USDC 餘額
+            "usdt_equity": status.get("usdt_equity", 0),
+            "usdt_available": status.get("usdt_available", 0),
+            "usdc_equity": status.get("usdc_equity", 0),
+            "usdc_available": status.get("usdc_available", 0),
             "positions": status.get("positions", []),
             "symbols": status.get("symbols", []),
             "timestamp": datetime.utcnow().isoformat()

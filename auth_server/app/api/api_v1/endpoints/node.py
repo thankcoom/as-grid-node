@@ -48,6 +48,11 @@ class HeartbeatRequest(BaseModel):
     unrealized_pnl: float = 0.0
     equity: float = 0.0
     available_balance: float = 0.0
+    # 分離的 USDT/USDC 餘額
+    usdt_equity: float = 0.0
+    usdt_available: float = 0.0
+    usdc_equity: float = 0.0
+    usdc_available: float = 0.0
     positions: List[dict] = []
     symbols: List[str] = []
     timestamp: Optional[str] = None
@@ -187,6 +192,11 @@ def node_heartbeat(
     node_status.unrealized_pnl = req.unrealized_pnl
     node_status.equity = req.equity
     node_status.available_balance = req.available_balance
+    # 分離的 USDT/USDC 餘額
+    node_status.usdt_equity = req.usdt_equity
+    node_status.usdt_available = req.usdt_available
+    node_status.usdc_equity = req.usdc_equity
+    node_status.usdc_available = req.usdc_available
     node_status.positions = json.dumps(req.positions)
     node_status.symbols = json.dumps(req.symbols)
     node_status.last_heartbeat = datetime.utcnow()
@@ -299,6 +309,11 @@ def get_my_node_status(
         "unrealized_pnl": node_status.unrealized_pnl,
         "equity": node_status.equity,
         "available_balance": node_status.available_balance,
+        # 分離的 USDT/USDC 餘額
+        "usdt_equity": node_status.usdt_equity or 0,
+        "usdt_available": node_status.usdt_available or 0,
+        "usdc_equity": node_status.usdc_equity or 0,
+        "usdc_available": node_status.usdc_available or 0,
         "positions": json.loads(node_status.positions) if node_status.positions else [],
         "symbols": json.loads(node_status.symbols) if node_status.symbols else [],
         "last_heartbeat": node_status.last_heartbeat.isoformat() if node_status.last_heartbeat else None,

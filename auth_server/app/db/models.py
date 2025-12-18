@@ -138,6 +138,12 @@ class NodeStatus(Base):
     equity = Column(Float, default=0.0)
     available_balance = Column(Float, default=0.0)
     
+    # 分離的 USDT/USDC 餘額
+    usdt_equity = Column(Float, default=0.0)
+    usdt_available = Column(Float, default=0.0)
+    usdc_equity = Column(Float, default=0.0)
+    usdc_available = Column(Float, default=0.0)
+    
     # 持倉資訊 (JSON)
     positions = Column(Text, nullable=True)
     symbols = Column(Text, nullable=True)

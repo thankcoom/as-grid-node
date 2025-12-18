@@ -247,22 +247,27 @@ sequenceDiagram
 
 | 識別碼 | 格式 | 來源 | 用途 |
 | :--- | :--- | :--- | :--- |
-| **System User ID** | UUID (a1b2c3d4-...) | 系統生成 | 內部識別、Node 註冊 |
-| **Bitget UID** | 數字 (6167312609) | Bitget API | 交易所帳戶識別、審核 |
+| **Bitget UID** | 數字 (6167312609) | Bitget API | ✅ **主要識別碼** - Node 部署 |
+| **System User ID** | UUID (a1b2c3d4-...) | 系統生成 | 內部識別（不再用於部署） |
 | **Email** | 字串 | 用戶輸入 | 登入識別 |
 
-### 建議改進
+### ✅ 已實作改進（v2.0）
 
-目前使用 System User ID 進行 Node 部署，可考慮改用 Bitget UID：
+**現在使用 Bitget UID 作為 Node 部署的主要識別碼**：
 
 **優點**：
-- 用戶不需要複製/貼上 UUID
-- Bitget UID 不會重複
-- 更直觀
+- 用戶不需要複製/貼上複雜的 UUID
+- Bitget UID 是 10 位數字，更短更直觀
+- 不會重複（由 Bitget 保證唯一）
 
-**實作方式**：
-1. Node 註冊時使用 `bitget_uid` 而非 `user_id`
-2. Auth Server 根據 `exchange_uid` 欄位查詢用戶
+**環境變數**：
+```bash
+# 新版（推薦）
+BITGET_UID=6167312609
+
+# 舊版（仍支援）
+USER_ID=a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+```
 
 ---
 

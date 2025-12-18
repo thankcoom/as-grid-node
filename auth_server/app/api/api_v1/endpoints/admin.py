@@ -49,6 +49,70 @@ def get_admin_stats(
     }
 
 
+@router.get("/diagnostic/{uid}")
+def diagnose_user_credentials(
+    uid: str,
+    db: Session = Depends(deps.get_db),
+    admin: models.User = Depends(get_admin_user)
+):
+    """
+    診斷用戶憑證狀態（管理員功能）
+    檢查：
+    1. 用戶是否存在
+    2. 用戶是否有 credentials 記錄
+    3. 解密是否成功
+    """
+    from app.core.config import settings
+    
+    # 查找用戶
+    user = db.query(models.User).filter(models.User.exchange_uid == uid).first()
+    
+    if not user:
+        return {
+            "exists": False,
+            "message": f"No user found with UID: {uid}"
+        }
+    
+    result = {
+        "exists": True,
+        "user_id": user.id,
+        "email": user.email,
+        "status": user.status,
+        "exchange_uid": user.exchange_uid,
+        "has_credentials": False,
+        "decryption_success": False,
+        "api_key_preview": None,
+        "error": None
+    }
+    
+    if not user.credentials:
+        result["message"] = "User exists but has NO credentials stored!"
+        return result
+    
+    result["has_credentials"] = True
+    result["credentials_id"] = user.credentials.id
+    result["api_key_encrypted_preview"] = user.credentials.api_key_encrypted[:30] + "..." if user.credentials.api_key_encrypted else None
+    
+    # 嘗試解密
+    try:
+        from cryptography.fernet import Fernet, InvalidToken
+        fernet = Fernet(settings.ENCRYPTION_KEY.encode())
+        
+        api_key = fernet.decrypt(user.credentials.api_key_encrypted.encode()).decode()
+        result["decryption_success"] = True
+        result["api_key_preview"] = api_key[:8] + "..." + api_key[-4:] if len(api_key) > 12 else api_key[:4] + "..."
+        result["message"] = "Credentials exist and decryption successful!"
+        
+    except InvalidToken as e:
+        result["error"] = f"InvalidToken: ENCRYPTION_KEY mismatch! Key starts with: {settings.ENCRYPTION_KEY[:20]}..."
+        result["message"] = "DECRYPTION FAILED - Key mismatch!"
+    except Exception as e:
+        result["error"] = str(e)
+        result["message"] = f"Decryption error: {str(e)}"
+    
+    return result
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # User Management
 # ═══════════════════════════════════════════════════════════════════════════

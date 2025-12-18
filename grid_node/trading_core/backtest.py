@@ -111,7 +111,7 @@ class BacktestManager:
                         until = since + 24 * 60 * 60 * 1000
 
                         try:
-                            ohlcv = exchange.fetch_ohlcv(fetch_symbol, "1m", since=since, limit=1500)
+                            ohlcv = exchange.fetch_ohlcv(fetch_symbol, "1m", since=since, limit=1000)
                             if ohlcv:
                                 ohlcv = [bar for bar in ohlcv if bar[0] < until]
                                 df = pd.DataFrame(ohlcv, columns=['open_time', 'open', 'high', 'low', 'close', 'volume'])

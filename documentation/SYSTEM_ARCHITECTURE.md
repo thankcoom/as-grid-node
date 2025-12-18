@@ -150,7 +150,7 @@ bitget_as/
 | `/users/bind_node` | POST | 綁定節點 URL | ✅ |
 | `/admin/users` | GET | 用戶列表 | ✅ Admin |
 | `/admin/users/{id}/approve` | POST | 審核用戶 | ✅ Admin |
-| `/node/register` | POST | Node 註冊 | ❌ (用 user_id) |
+| `/node/register` | POST | Node 註冊 | ❌ (用 BITGET_UID) |
 | `/node/heartbeat` | POST | Node 心跳 | ✅ Node |
 | `/proxy/grid/*` | * | 代理到用戶 Node | ✅ |
 
@@ -195,7 +195,7 @@ bitget_as/
 | 變數名 | 必須 | 說明 | 預設值 |
 | :--- | :---: | :--- | :--- |
 | `AUTH_SERVER_URL` | ✅ | 官方服務 URL | https://louisasgrid.zeabur.app |
-| `USER_ID` | ✅ | 用戶 ID | - |
+| `BITGET_UID` | ✅ | Bitget UID (從 Deploy 頁面獲取) | - |
 | `NODE_SECRET` | ✅ | Node 密鑰 | - |
 | `CORS_ORIGINS` | ❌ | CORS 來源 | * |
 
@@ -236,7 +236,7 @@ sequenceDiagram
     U->>N: 部署到 Zeabur (帶 USER_ID)
     
     Note over U,N: 4. Node 啟動
-    N->>A: POST /node/register (user_id)
+    N->>A: POST /node/register (BITGET_UID)
     A->>A: 解密用戶憑證
     A-->>N: credentials: {api_key, secret, passphrase}
     N->>N: 設置環境變數
@@ -287,7 +287,7 @@ NODE_SECRET=your_secret_here
 
 2. **Node 離線**
    - 檢查 AUTH_SERVER_URL 是否正確
-   - 確認 USER_ID 存在且狀態為 active
+   - 確認 BITGET_UID 存在且對應用戶狀態為 active
 
 3. **CORS 錯誤**
    - Grid Node: 設置 CORS_ORIGINS

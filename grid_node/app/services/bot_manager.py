@@ -34,12 +34,12 @@ class BotManager:
     def _init_auth_client(self):
         """初始化 AuthClient"""
         auth_server_url = os.getenv("AUTH_SERVER_URL")
-        user_id = os.getenv("USER_ID")
+        bitget_uid = os.getenv("BITGET_UID")
         
-        if auth_server_url and user_id:
+        if auth_server_url and bitget_uid:
             self.auth_client = AuthClient(
                 auth_server_url=auth_server_url,
-                user_id=user_id,
+                bitget_uid=bitget_uid,
                 node_secret=os.getenv("NODE_SECRET", ""),
                 heartbeat_interval=30
             )
@@ -47,7 +47,7 @@ class BotManager:
             self.auth_client.set_status_callback(self._get_heartbeat_status)
             logger.info("AuthClient initialized for official server communication")
         else:
-            logger.info("Running in standalone mode (no AUTH_SERVER_URL)")
+            logger.info("Running in standalone mode (no AUTH_SERVER_URL or BITGET_UID)")
     
     async def initialize(self) -> Dict[str, Any]:
         """

@@ -4,8 +4,8 @@ metadata:
   name: Louis AS Grid Node
 spec:
   description: 自動化網格交易機器人節點 - 24/7 智能交易
-  icon: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/umami.svg
-  coverImage: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/umami.svg
+  icon: https://louisasgrid.zeabur.app/logo.png
+  coverImage: https://louisasgrid.zeabur.app/logo.png
   tags:
     - Trading
     - Bot
@@ -82,7 +82,7 @@ spec:
         
   services:
     - name: grid-node
-      icon: https://raw.githubusercontent.com/zeabur/service-icons/main/marketplace/umami.svg
+      icon: https://louisasgrid.zeabur.app/logo.png
       template: PREBUILT
       domainKey: NODE_DOMAIN
       spec:

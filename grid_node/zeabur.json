@@ -8,8 +8,8 @@
                 "default": "https://louisasgrid.zeabur.app",
                 "required": true
             },
-            "USER_ID": {
-                "description": "您在 Deploy 頁面看到的用戶 ID",
+            "BITGET_UID": {
+                "description": "您的 Bitget 交易所 UID（從 Deploy 頁面複製）",
                 "required": true
             },
             "NODE_SECRET": {

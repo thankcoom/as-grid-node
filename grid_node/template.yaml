@@ -14,7 +14,19 @@ spec:
     - key: BITGET_UID
       type: STRING
       name: Bitget UID
-      description: 您的 Bitget Exchange UID（從官網 Deploy 頁面複製）
+      description: 您的 Bitget Exchange UID（10位數字，可從 Bitget 個人中心查看）
+    - key: EXCHANGE_API_KEY
+      type: STRING
+      name: API Key
+      description: Bitget API Key（需勾選合約交易權限）
+    - key: EXCHANGE_SECRET
+      type: STRING
+      name: API Secret
+      description: Bitget API Secret
+    - key: EXCHANGE_PASSPHRASE
+      type: STRING
+      name: Passphrase
+      description: Bitget API Passphrase（創建 API 時設定的密碼）
     - key: NODE_DOMAIN
       type: DOMAIN
       name: 節點網域
@@ -22,13 +34,19 @@ spec:
   readme: |
     # Louis AS Grid Node
     
-    此節點將連接到官方伺服器，自動獲取您的交易配置並執行網格交易。
+    此節點將連接到官方伺服器，執行網格交易。您的 API 憑證安全地存儲在您自己的節點中。
+    
+    ## 🔐 部署前準備
+    
+    1. **前往 [Bitget](https://www.bitget.com)** 登入您的帳號
+    2. **個人中心 → API 管理 → 創建 API**
+    3. 勾選 **合約交易** 權限（必要）
+    4. 記下您的 **API Key**、**API Secret**、**Passphrase**
+    5. 在個人中心查看您的 **UID**（10 位數字）
     
     ## 🌐 官網
     
     **[前往 Louis AS Grid 官網 →](https://louisasgrid.zeabur.app)**
-    
-    在官網註冊帳號、驗證 Bitget API，並在部署完成後回到官網綁定節點。
     
     ## 部署後操作
     1. 等待部署完成（約 1-2 分鐘）
@@ -36,10 +54,10 @@ spec:
     3. 返回 [官網設定頁面](https://louisasgrid.zeabur.app/settings)，貼上網域並儲存
     4. 開始交易！
     
-    ## 注意事項
-    - BITGET_UID 是您的 Bitget 帳戶 ID（10 位數字）
-    - NODE_SECRET 會自動生成，請勿修改
-    - 如需重新部署，請先在官網解除綁定
+    ## 安全說明
+    - ✅ API 憑證僅存儲在您的節點中，不經過官方伺服器
+    - ✅ 節點與官方透過安全的 JWT Token 通訊
+    - ⚠️ 請勿將 API Key 分享給任何人
     
     ## 聯繫我們
     - 官網：https://louisasgrid.zeabur.app
@@ -51,30 +69,42 @@ spec:
       variables:
         - key: BITGET_UID
           name: Bitget UID
-          description: Your Bitget Exchange UID (copy from the official Deploy page)
+          description: Your Bitget Exchange UID (10-digit number from Bitget profile)
+        - key: EXCHANGE_API_KEY
+          name: API Key
+          description: Bitget API Key (must have Futures trading permission)
+        - key: EXCHANGE_SECRET
+          name: API Secret
+          description: Bitget API Secret
+        - key: EXCHANGE_PASSPHRASE
+          name: Passphrase
+          description: Bitget API Passphrase (set when creating the API)
         - key: NODE_DOMAIN
           name: Node Domain
           description: Choose a domain for your trading node
       readme: |
         # Louis AS Grid Node
         
-        This node connects to the official server to automatically fetch your trading configuration and execute grid trading.
+        This node connects to the official server and executes grid trading. Your API credentials are securely stored on your own node.
         
-        ## 🌐 Official Website
+        ## 🔐 Before Deployment
         
-        **[Go to Louis AS Grid Website →](https://louisasgrid.zeabur.app)**
-        
-        Register an account on our website, get your User ID, and bind your node after deployment.
+        1. **Go to [Bitget](https://www.bitget.com)** and log in
+        2. **Profile → API Management → Create API**
+        3. Enable **Futures Trading** permission (required)
+        4. Note your **API Key**, **API Secret**, **Passphrase**
+        5. Find your **UID** in profile (10-digit number)
         
         ## After Deployment
-        1. Wait for deployment to complete (~1-2 minutes)
+        1. Wait for deployment (~1-2 minutes)
         2. Copy the generated domain (e.g., `xxx.zeabur.app`)
-        3. Return to [Official Settings page](https://louisasgrid.zeabur.app/settings), paste the domain and save
+        3. Return to [Official Settings](https://louisasgrid.zeabur.app/settings), paste and save
         4. Start trading!
         
-        ## Notes
-        - NODE_SECRET is auto-generated, do not modify
-        - To redeploy, unbind from the official website first
+        ## Security
+        - ✅ API credentials are stored ONLY on your node
+        - ✅ Secure JWT communication with official server
+        - ⚠️ Never share your API Key with anyone
         
         ## Contact
         - Website: https://louisasgrid.zeabur.app
@@ -98,6 +128,12 @@ spec:
             readonly: true
           BITGET_UID:
             default: ${BITGET_UID}
+          EXCHANGE_API_KEY:
+            default: ${EXCHANGE_API_KEY}
+          EXCHANGE_SECRET:
+            default: ${EXCHANGE_SECRET}
+          EXCHANGE_PASSPHRASE:
+            default: ${EXCHANGE_PASSPHRASE}
           NODE_SECRET:
             default: ${PASSWORD}
             expose: true
@@ -115,3 +151,4 @@ spec:
             title: Node Secret
             content: ${NODE_SECRET}
             category: Credentials
+

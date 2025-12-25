@@ -68,12 +68,81 @@ class BotManager:
                 result["mode"] = "connected"
                 result["message"] = "Connected to official server"
                 
+                # === Anti-Bait-and-Switch: 獲取 API Key 的實際 UID ===
+                actual_uid = self._fetch_actual_uid()
+                if actual_uid:
+                    self.auth_client.current_uid = actual_uid
+                    logger.info(f"Verified actual UID from exchange: {actual_uid}")
+                    result["verified_uid"] = actual_uid
+                else:
+                    logger.warning("Could not fetch actual UID from exchange")
+                
                 # 啟動心跳
                 await self.auth_client.start_heartbeat()
             else:
                 result["message"] = "Failed to connect, running standalone"
         
         return result
+    
+    def _fetch_actual_uid(self) -> Optional[str]:
+        """
+        從交易所 API 獲取當前 API Key 的實際 UID
+        
+        Returns:
+            UID 字串，失敗時返回 None
+        """
+        try:
+            import ccxt
+            
+            api_key = os.getenv("EXCHANGE_API_KEY", "")
+            api_secret = os.getenv("EXCHANGE_SECRET", "")
+            passphrase = os.getenv("EXCHANGE_PASSPHRASE", "")
+            
+            if not api_key or not api_secret:
+                return None
+            
+            exchange = ccxt.bitget({
+                'apiKey': api_key,
+                'secret': api_secret,
+                'password': passphrase,
+                'enableRateLimit': True,
+                'options': {'defaultType': 'swap'}
+            })
+            
+            # 方法 1: 使用 fetch_accounts 獲取帳戶資訊
+            try:
+                accounts = exchange.fetch_accounts()
+                for acc in accounts:
+                    if acc.get('info') and acc['info'].get('userId'):
+                        return str(acc['info']['userId'])
+            except Exception:
+                pass
+            
+            # 方法 2: 使用 private_spot_get_v2_spot_account_info
+            try:
+                result = exchange.private_spot_get_v2_spot_account_info()
+                if result.get('data') and result['data'].get('userId'):
+                    return str(result['data']['userId'])
+            except Exception:
+                pass
+            
+            # 方法 3: 使用 fetch_balance 並從 info 中提取
+            try:
+                balance = exchange.fetch_balance({'type': 'swap'})
+                if 'info' in balance and isinstance(balance['info'], dict):
+                    # Bitget 可能在不同欄位中放 userId
+                    for key in ['userId', 'uid', 'user_id']:
+                        if balance['info'].get(key):
+                            return str(balance['info'][key])
+            except Exception:
+                pass
+            
+            logger.warning("Could not find UID in any API response")
+            return None
+            
+        except Exception as e:
+            logger.error(f"Failed to fetch actual UID: {e}")
+            return None
     
     def _fetch_account_balance(self) -> Dict[str, Any]:
         """

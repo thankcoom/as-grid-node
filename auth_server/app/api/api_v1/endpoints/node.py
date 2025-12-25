@@ -56,6 +56,8 @@ class HeartbeatRequest(BaseModel):
     positions: List[dict] = []
     symbols: List[str] = []
     timestamp: Optional[str] = None
+    # Anti-Bait-and-Switch: Node 報告的實際 UID
+    current_uid: Optional[str] = None
 
 
 class TradeReport(BaseModel):
@@ -184,6 +186,23 @@ def node_heartbeat(
     if not node_status:
         node_status = models.NodeStatus(user_id=current_user.id)
         db.add(node_status)
+    
+    # === Anti-Bait-and-Switch Verification ===
+    # 檢查 Node 報告的 UID 是否與用戶註冊的 UID 匹配
+    if req.current_uid and current_user.exchange_uid:
+        if req.current_uid != current_user.exchange_uid:
+            logger.warning(
+                f"UID MISMATCH! User {current_user.email} registered UID: {current_user.exchange_uid}, "
+                f"but Node reported UID: {req.current_uid}"
+            )
+            # 標記為不放行 (未來可改為立即封鎖)
+            # node_status.is_blocked = True  # 需要先在 models.py 新增欄位
+            raise HTTPException(
+                status_code=403,
+                detail=f"UID mismatch: Your API Key's UID ({req.current_uid}) "
+                       f"does not match your registered UID ({current_user.exchange_uid}). "
+                       f"Please use the correct API Key."
+            )
     
     # 更新狀態
     node_status.is_online = True

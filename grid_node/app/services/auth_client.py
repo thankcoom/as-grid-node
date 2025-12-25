@@ -42,6 +42,7 @@ class AuthClient:
         
         self.jwt_token: Optional[str] = None
         self.is_registered = False
+        self.current_uid: Optional[str] = None  # UID verified from exchange
         self._heartbeat_task: Optional[asyncio.Task] = None
         self._status_callback: Optional[Callable] = None
         self._session: Optional[aiohttp.ClientSession] = None
@@ -143,7 +144,9 @@ class AuthClient:
             "usdc_available": status.get("usdc_available", 0),
             "positions": status.get("positions", []),
             "symbols": status.get("symbols", []),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
+            # Anti-Bait-and-Switch: 報告當前 API Key 的實際 UID
+            "current_uid": self.current_uid or self.bitget_uid
         })
         
         return result

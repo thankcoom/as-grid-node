@@ -35,14 +35,8 @@ export default defineConfig({
       }
     },
 
-    // 壓縮選項
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,  // 移除 console.log
-        drop_debugger: true  // 移除 debugger
-      }
-    },
+    // 壓縮選項 (使用 esbuild，Vite 內建)
+    minify: 'esbuild',
 
     // 資源大小警告閾值 (KB)
     chunkSizeWarningLimit: 500,

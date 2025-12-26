@@ -56,9 +56,9 @@ class SSEClient {
      * 連接到 auth_server SSE 代理
      */
     async connectToProxy() {
-        // 使用 API base URL (與其他 API 請求相同)
-        const apiBaseUrl = import.meta.env.VITE_API_URL || '/api/v1';
-        const url = `${apiBaseUrl}/proxy/sse/events`;
+        // 使用與 api.js 相同的環境變數
+        const authApiUrl = import.meta.env.VITE_AUTH_API_URL || '';
+        const url = `${authApiUrl}/api/v1/proxy/sse/events`;
 
         try {
             const response = await fetch(url, {

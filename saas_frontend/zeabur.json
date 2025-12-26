@@ -1,10 +1,11 @@
 {
+    "$schema": "https://schema.zeabur.app/template.json",
     "service": {
         "name": "as-grid-frontend",
-        "dockerfile": "Dockerfile",
         "env": {
             "VITE_AUTH_API_URL": {
-                "description": "Backend API URL (auth server)",
+                "description": "Auth Server API URL (例如: https://louisasgrid.zeabur.app)",
+                "default": "https://louisasgrid.zeabur.app",
                 "required": true
             }
         }

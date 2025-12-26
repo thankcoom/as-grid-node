@@ -36,8 +36,9 @@ export default function Deploy() {
 
     const steps = [
         { num: 1, title: t.deploy.step1Title || '一鍵部署', titleEn: 'One-Click Deploy', desc: t.deploy.step1Desc || '點擊按鈕開始', icon: Icons.Rocket },
-        { num: 2, title: t.deploy.step2Title || '確認部署', titleEn: 'Confirm Deploy', desc: t.deploy.step2Desc || '在 Zeabur 確認', icon: Icons.CheckCircle },
-        { num: 3, title: t.deploy.step3Title || '連接節點', titleEn: 'Connect Node', desc: t.deploy.step3Desc || '貼上網域到設定', icon: Icons.Link }
+        { num: 2, title: t.deploy.step2Title || '設定 API', titleEn: 'Setup API', desc: t.deploy.step2Desc || '填入環境變數', icon: Icons.Shield },
+        { num: 3, title: t.deploy.step3Title || '確認部署', titleEn: 'Confirm Deploy', desc: t.deploy.step3Desc || '等待部署完成', icon: Icons.CheckCircle },
+        { num: 4, title: t.deploy.step4Title || '連接節點', titleEn: 'Connect Node', desc: t.deploy.step4Desc || '貼上網域到設定', icon: Icons.Link }
     ];
 
     return (
@@ -67,7 +68,7 @@ export default function Deploy() {
                 </div>
 
                 {/* Simple Steps */}
-                <div className="grid grid-cols-3 gap-4 mb-12">
+                <div className="grid grid-cols-4 gap-4 mb-12">
                     {steps.map((step, i) => (
                         <div
                             key={step.num}
@@ -164,11 +165,74 @@ export default function Deploy() {
                     </p>
                 </div>
 
+                {/* ═══════════════════════════════════════════════════════════════════
+                    【混合式安全設計】API 憑證設定引導
+                    用戶需要在 Zeabur 環境變數中設定 API 憑證
+                ═══════════════════════════════════════════════════════════════════ */}
+
+                {/* Step 2: API 憑證設定 (重要!) */}
+                <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-2xl p-8 mb-8 animate-fade-in" style={{ animationDelay: '0.35s' }}>
+                    <h3 className="text-[16px] font-semibold text-white mb-4 flex items-center gap-2">
+                        <Icons.Shield className="w-5 h-5 text-amber-400" />
+                        {t.deploy.apiSetupTitle || '🔐 重要：設定 API 憑證'}
+                    </h3>
+
+                    <p className="text-[13px] text-white/60 mb-4">
+                        {t.deploy.apiSetupDesc || '點擊「一鍵部署」後，請在 Zeabur 頁面設定以下環境變數：'}
+                    </p>
+
+                    <div className="bg-black/30 rounded-xl p-5 mb-6">
+                        <div className="space-y-3 font-mono text-[13px]">
+                            <div className="flex items-center gap-3">
+                                <code className="text-amber-400 min-w-[180px]">BITGET_API_KEY</code>
+                                <code className="text-white/40">=</code>
+                                <code className="text-white/60">{t.deploy.yourApiKey || '您的 API Key'}</code>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <code className="text-amber-400 min-w-[180px]">BITGET_API_SECRET</code>
+                                <code className="text-white/40">=</code>
+                                <code className="text-white/60">{t.deploy.yourApiSecret || '您的 API Secret'}</code>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <code className="text-amber-400 min-w-[180px]">BITGET_PASSPHRASE</code>
+                                <code className="text-white/40">=</code>
+                                <code className="text-white/60">{t.deploy.yourPassphrase || '您的 Passphrase'}</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 安全說明 */}
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 mb-4">
+                        <h4 className="text-[13px] font-semibold text-emerald-400 mb-2 flex items-center gap-2">
+                            <Icons.Shield className="w-4 h-4" />
+                            {t.deploy.whySecure || '為什麼這樣更安全？'}
+                        </h4>
+                        <ul className="space-y-2 text-[12px] text-white/60">
+                            <li className="flex items-start gap-2">
+                                <span className="text-emerald-400">✓</span>
+                                <span>{t.deploy.securePoint1 || 'API 憑證只存在您自己的 Zeabur 專案中'}</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="text-emerald-400">✓</span>
+                                <span>{t.deploy.securePoint2 || 'LouisLAB 官方永遠無法獲取您的 API Key'}</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="text-emerald-400">✓</span>
+                                <span>{t.deploy.securePoint3 || '即使官方伺服器被攻擊，您的資金也是安全的'}</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <p className="text-[11px] text-white/40">
+                        💡 {t.deploy.apiSetupTip || '提示：在 Zeabur 專案頁面，點擊您的服務 → Variables → 添加以上三個環境變數'}
+                    </p>
+                </div>
+
                 {/* After Deploy Instructions */}
                 <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-2xl p-8 mb-8 animate-fade-in" style={{ animationDelay: '0.4s' }}>
                     <h3 className="text-[16px] font-semibold text-white mb-4 flex items-center gap-2">
                         <Icons.CheckCircle className="w-5 h-5 text-emerald-400" />
-                        {t.deploy.afterDeployTitle || '部署完成後'}
+                        {t.deploy.afterDeployTitle || '設定完成後'}
                     </h3>
                     <ol className="space-y-3 text-[13px] text-white/60 mb-6">
                         <li className="flex items-start gap-3">

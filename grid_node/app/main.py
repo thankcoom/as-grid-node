@@ -16,7 +16,7 @@ from app.core.config import settings
 from app.services.bot_manager import bot_manager
 
 # API 路由
-from app.api import coin, symbols, backtest, websocket
+from app.api import coin, symbols, backtest, websocket, sse
 
 import logging
 
@@ -63,6 +63,7 @@ app.include_router(coin.router, prefix="/api/v1/coin", tags=["coin"])
 app.include_router(symbols.router, prefix="/api/v1/symbols", tags=["symbols"])
 app.include_router(backtest.router, prefix="/api/v1/backtest", tags=["backtest"])
 app.include_router(websocket.router, prefix="/api/v1", tags=["websocket"])
+app.include_router(sse.router, prefix="/api/v1/sse", tags=["sse"])
 
 
 async def verify_secret(x_node_secret: str = Header(...)):
@@ -86,10 +87,10 @@ class CommandRequest(BaseModel):
 # ═══════════════════════════════════════════════════════════════════════════
 
 @app.post("/api/v1/grid/start", dependencies=[Depends(verify_secret)])
-def start_grid(req: StartRequest):
+async def start_grid(req: StartRequest):
     """啟動網格交易"""
     try:
-        return bot_manager.start(req.symbol, req.quantity)
+        return await bot_manager.start(req.symbol, req.quantity)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

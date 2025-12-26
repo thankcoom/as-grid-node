@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useI18n, LanguageToggle, Logo } from '../context/I18nContext';
 import api from '../services/api';
 import { Icons } from '../components/Icons';
-import { getWebSocketClient } from '../services/WebSocketClient';
+import { getSSEClient } from '../services/SSEClient';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -88,9 +88,9 @@ export default function Dashboard() {
     }
   };
 
-  // WebSocket 連線 ref
-  const wsConnectedRef = useRef(false);
-  const [wsConnected, setWsConnected] = useState(false);
+  // SSE 連線 ref
+  const sseConnectedRef = useRef(false);
+  const [sseConnected, setSseConnected] = useState(false);
   const [logs, setLogs] = useState([]);
   const [runtime, setRuntime] = useState(0);
   const runtimeRef = useRef(null);
@@ -123,61 +123,65 @@ export default function Dashboard() {
     };
   }, [nodeData?.is_trading]);
 
-  // 初始化 WebSocket 連線
+  // 初始化輪詢
   useEffect(() => {
     // 首次獲取狀態
     checkNodeStatus();
 
-    // 保留輪詢作為備用（15秒間隔，WebSocket 連線成功後會更快更新）
+    // 保留輪詢作為備用（15秒間隔，SSE 連線成功後會更快更新）
     const interval = setInterval(checkNodeStatus, 15000);
     return () => clearInterval(interval);
   }, [checkNodeStatus]);
 
-  // WebSocket 連線（當 nodeData.node_url 可用時）
+  // SSE 連線（當 Node 已連接時）
   useEffect(() => {
-    if (nodeStatus !== 'connected' || !nodeData?.node_url) return;
+    if (nodeStatus !== 'connected') return;
 
-    const wsClient = getWebSocketClient();
+    // 從 localStorage 獲取 JWT token
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.warn('[Dashboard] No auth token found');
+      return;
+    }
+
+    const sseClient = getSSEClient();
 
     // 註冊回調
-    wsClient.on('onConnect', () => {
-      console.log('[Dashboard] WebSocket connected');
-      setWsConnected(true);
-      wsConnectedRef.current = true;
+    sseClient.on('onConnect', () => {
+      console.log('[Dashboard] SSE connected');
+      setSseConnected(true);
+      sseConnectedRef.current = true;
     });
 
-    wsClient.on('onDisconnect', () => {
-      console.log('[Dashboard] WebSocket disconnected');
-      setWsConnected(false);
-      wsConnectedRef.current = false;
+    sseClient.on('onDisconnect', () => {
+      console.log('[Dashboard] SSE disconnected');
+      setSseConnected(false);
+      sseConnectedRef.current = false;
     });
 
-    wsClient.on('onAccount', (data) => {
+    sseClient.on('onAccount', (data) => {
       setNodeData(prev => ({
         ...prev,
         equity: data.equity,
         available_balance: data.available_balance,
         unrealized_pnl: data.unrealized_pnl,
-        total_pnl: data.total_pnl || prev?.total_pnl || 0
+        total_pnl: data.total_pnl || prev?.total_pnl || 0,
+        usdt_equity: data.usdt_equity || prev?.usdt_equity || 0,
+        usdt_available: data.usdt_available || prev?.usdt_available || 0,
+        usdc_equity: data.usdc_equity || prev?.usdc_equity || 0,
+        usdc_available: data.usdc_available || prev?.usdc_available || 0,
       }));
       setLastUpdate(new Date());
     });
 
-    wsClient.on('onPositions', (positions) => {
+    sseClient.on('onPositions', (positions) => {
       setNodeData(prev => ({
         ...prev,
         positions: positions
       }));
     });
 
-    wsClient.on('onIndicators', (indicators) => {
-      setNodeData(prev => ({
-        ...prev,
-        indicators: indicators
-      }));
-    });
-
-    wsClient.on('onStatus', (status) => {
+    sseClient.on('onStatus', (status) => {
       setNodeData(prev => ({
         ...prev,
         is_trading: status.is_trading,
@@ -186,17 +190,22 @@ export default function Dashboard() {
       }));
     });
 
-    wsClient.on('onLog', (log) => {
-      setLogs(prev => [...prev.slice(-99), log.message]);
+    sseClient.on('onConnectionStatus', (status) => {
+      console.log('[Dashboard] Node connection status:', status);
+      // 可用於顯示 Node 與交易所的連線狀態
     });
 
-    // 連線到 Grid Node
-    wsClient.connect(nodeData.node_url);
+    sseClient.on('onError', (error) => {
+      console.error('[Dashboard] SSE error:', error);
+    });
+
+    // 連線到 SSE 代理
+    sseClient.connect(token);
 
     return () => {
-      wsClient.disconnect();
+      sseClient.disconnect();
     };
-  }, [nodeStatus, nodeData?.node_url]);
+  }, [nodeStatus]);
 
   const statusConfig = {
     checking: { icon: Icons.RefreshCw, spin: true, text: t.dashboard.checking, color: 'text-white/40', bg: 'bg-white/5' },
@@ -513,9 +522,9 @@ export default function Dashboard() {
                 {t.dashboard.tradingLog}
               </h3>
               <div className="flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+                <span className={`w-2 h-2 rounded-full ${sseConnected ? 'bg-emerald-400' : 'bg-amber-400'}`} />
                 <span className="text-[11px] text-white/40">
-                  {wsConnected ? t.dashboard.realtime : t.dashboard.connecting}
+                  {sseConnected ? t.dashboard.realtime : t.dashboard.connecting}
                 </span>
               </div>
             </div>

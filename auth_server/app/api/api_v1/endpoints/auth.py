@@ -225,31 +225,21 @@ async def verify_api(
         # Update user
         current_user.exchange_uid = uid
         current_user.api_verified_at = datetime.utcnow()
-        
-        # 保存加密的 API 憑證
-        from app.core import security as sec
-        encrypted_key = sec.encrypt_data(creds.api_key)
-        encrypted_secret = sec.encrypt_data(creds.api_secret)
-        encrypted_passphrase = sec.encrypt_data(creds.passphrase) if creds.passphrase else None
-        
-        existing_creds = db.query(models.APICredential).filter(
-            models.APICredential.user_id == current_user.id
-        ).first()
-        
-        if existing_creds:
-            existing_creds.api_key_encrypted = encrypted_key
-            existing_creds.api_secret_encrypted = encrypted_secret
-            existing_creds.passphrase_encrypted = encrypted_passphrase
-        else:
-            new_creds = models.APICredential(
-                user_id=current_user.id,
-                api_key_encrypted=encrypted_key,
-                api_secret_encrypted=encrypted_secret,
-                passphrase_encrypted=encrypted_passphrase,
-                exchange="bitget"
-            )
-            db.add(new_creds)
-        
+
+        # ═══════════════════════════════════════════════════════════════════
+        # 【混合式安全設計】API 憑證不再存儲於 Server
+        #
+        # 原因：
+        # 1. 用戶的 API 憑證只存在用戶自己的 Zeabur 環境變數中
+        # 2. 官方伺服器永遠無法獲取用戶的 API Key
+        # 3. 即使官方 DB 被入侵，用戶資金也是安全的
+        #
+        # 用戶需要在部署 Grid Node 時，在 Zeabur 環境變數中設定：
+        # - BITGET_API_KEY
+        # - BITGET_API_SECRET
+        # - BITGET_PASSPHRASE
+        # ═══════════════════════════════════════════════════════════════════
+
         # 根據用戶狀態決定下一步
         if is_update:
             # Active user updating API - keep status as active

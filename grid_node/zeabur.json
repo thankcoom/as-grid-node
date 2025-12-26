@@ -1,21 +1,52 @@
 {
+    "$schema": "https://schema.zeabur.app/template.json",
     "service": {
-        "name": "grid-node",
-        "dockerfile": "Dockerfile",
+        "name": "as-grid-node",
+        "icon": "https://raw.githubusercontent.com/your-repo/logo.png",
+        "dockerfile": {
+            "path": "./Dockerfile",
+            "context": ".."
+        },
+        "ports": [8000],
         "env": {
             "AUTH_SERVER_URL": {
-                "description": "AS Grid 官方服務器 (自動設定)",
+                "description": "AS Grid 官方服務器 URL",
                 "default": "https://louisasgrid.zeabur.app",
                 "required": true
             },
             "BITGET_UID": {
-                "description": "您的 Bitget 交易所 UID（從 Deploy 頁面複製）",
+                "description": "您的 Bitget 交易所 UID (在 Bitget App 個人中心查看)",
                 "required": true
             },
             "NODE_SECRET": {
-                "description": "節點密鑰 (自動生成，可自訂)",
-                "default": "default_insecure_secret"
+                "description": "節點驗證密鑰 (請設定一個複雜的密鑰，例如：mynode_2024_secret)",
+                "required": true
+            },
+            "BITGET_API_KEY": {
+                "description": "Bitget API Key (在交易所 API 管理頁面創建)",
+                "required": true
+            },
+            "BITGET_API_SECRET": {
+                "description": "Bitget API Secret",
+                "required": true
+            },
+            "BITGET_PASSPHRASE": {
+                "description": "Bitget API Passphrase (創建 API 時您設定的密碼)",
+                "required": true
+            },
+            "CORS_ORIGINS": {
+                "description": "允許的前端來源 (通常不需要修改)",
+                "default": "*",
+                "required": false
             }
+        },
+        "instructions": {
+            "start": [
+                "1. 在 Bitget 交易所創建 API Key (需開啟合約交易權限)",
+                "2. 複製您的 UID、API Key、Secret、Passphrase",
+                "3. 填入上方環境變數",
+                "4. 部署完成後，複製服務 URL 到官網設定頁面"
+            ]
         }
     }
 }

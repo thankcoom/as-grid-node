@@ -45,7 +45,17 @@ class User(Base):
     # Admin approval tracking
     approved_at = Column(DateTime, nullable=True)
     approved_by = Column(String, nullable=True)
-    
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # 【交易時 UID 驗證】白名單警告機制
+    #
+    # 當用戶被移出白名單時：
+    # 1. 設定 whitelist_warning_at = 當前時間
+    # 2. 24 小時內發送警告但允許交易
+    # 3. 24 小時後禁止交易
+    # ═══════════════════════════════════════════════════════════════════════
+    whitelist_warning_at = Column(DateTime, nullable=True)
+
     # Group membership
     group_id = Column(String, ForeignKey("groups.id"), nullable=True)
     group = relationship("Group", back_populates="users")
@@ -151,7 +161,8 @@ class NodeStatus(Base):
     # Node 資訊
     node_version = Column(String, nullable=True)
     node_url = Column(String, nullable=True)
-    
+    node_secret = Column(String, nullable=True)  # 每個用戶自己的 NODE_SECRET
+
     # 時間戳
     registered_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

@@ -1,0 +1,52 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv/
+ENV/
+.eggs/
+*.egg-info/
+*.egg
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build artifacts
+dist/
+build/
+*.spec
+
+# Local development
+*.log
+*.db
+*.sqlite3
+
+# Secrets (never include)
+.env
+.env.*
+*.pem
+*.key
+
+# Other services (not needed for grid_node)
+auth_server/
+saas_frontend/
+gui/
+docs/
+
+# macOS
+.DS_Store

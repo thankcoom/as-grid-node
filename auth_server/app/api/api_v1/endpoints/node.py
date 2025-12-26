@@ -37,8 +37,9 @@ class NodeRegisterRequest(BaseModel):
 
 class NodeRegisterResponse(BaseModel):
     token: str
-    credentials: Optional[dict] = None
     message: str
+    # 【混合式安全設計】不再返回 credentials
+    # API 憑證由用戶在 Zeabur 環境變數中自行設定
 
 
 class HeartbeatRequest(BaseModel):
@@ -102,47 +103,33 @@ def register_node(
     # 驗證用戶狀態
     if user.status != "active":
         raise HTTPException(
-            status_code=403, 
+            status_code=403,
             detail=f"User not approved. Status: {user.status}"
         )
-    
-    # 獲取並解密 API 憑證（可選 - 如果失敗則 credentials = None）
-    credentials = None
-    if user.credentials:
-        logger.info(f"User {user.email} has credentials stored, attempting decryption...")
-        try:
-            from cryptography.fernet import Fernet, InvalidToken
-            # 嘗試使用 ENCRYPTION_KEY 解密
-            fernet = Fernet(settings.ENCRYPTION_KEY.encode())
-            
-            api_key = fernet.decrypt(user.credentials.api_key_encrypted.encode()).decode()
-            api_secret = fernet.decrypt(user.credentials.api_secret_encrypted.encode()).decode()
-            passphrase = ""
-            if user.credentials.passphrase_encrypted:
-                passphrase = fernet.decrypt(user.credentials.passphrase_encrypted.encode()).decode()
-            
-            credentials = {
-                "api_key": api_key,
-                "api_secret": api_secret,
-                "passphrase": passphrase
-            }
-            logger.info(f"Successfully decrypted credentials for user {user.email}")
-        except (InvalidToken, ValueError, Exception) as e:
-            # 解密失敗不阻止註冊，只是沒有憑證
-            logger.error(f"DECRYPTION FAILED for user {user.email}: {e}")
-            logger.error(f"ENCRYPTION_KEY starts with: {settings.ENCRYPTION_KEY[:20]}...")
-    else:
-        logger.warning(f"User {user.email} has NO credentials stored in database!")
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # 【混合式安全設計】不再從 Server 獲取 API 憑證
+    #
+    # Node 需要從 Zeabur 環境變數讀取：
+    # - BITGET_API_KEY
+    # - BITGET_API_SECRET
+    # - BITGET_PASSPHRASE
+    #
+    # Server 只負責：
+    # 1. 驗證 UID 是否在白名單中
+    # 2. 發放 JWT Token 用於心跳認證
+    # ═══════════════════════════════════════════════════════════════════════
     
     # 創建或更新 NodeStatus
     node_status = db.query(models.NodeStatus).filter(
         models.NodeStatus.user_id == user.id
     ).first()
-    
+
     if not node_status:
         node_status = models.NodeStatus(
             user_id=user.id,
             node_version=req.node_version,
+            node_secret=req.node_secret,  # 保存用戶的 NODE_SECRET
             is_online=True,
             last_heartbeat=datetime.utcnow()
         )
@@ -150,8 +137,9 @@ def register_node(
     else:
         node_status.is_online = True
         node_status.node_version = req.node_version
+        node_status.node_secret = req.node_secret  # 更新 NODE_SECRET
         node_status.last_heartbeat = datetime.utcnow()
-    
+
     db.commit()
     
     # 生成 JWT token
@@ -161,11 +149,10 @@ def register_node(
     )
     
     logger.info(f"Node registered for user: {user.email}")
-    
+
     return NodeRegisterResponse(
         token=access_token,
-        credentials=credentials,
-        message="Node registered successfully"
+        message="Node registered successfully. API credentials should be configured via environment variables."
     )
 
 

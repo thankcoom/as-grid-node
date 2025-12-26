@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 class BotManager:
     """交易機器人管理器 - 整合交易核心與官方通訊"""
-    
+
     def __init__(self):
         self.bot: Optional[MaxGridBot] = None
         self.task: Optional[asyncio.Task] = None
@@ -27,7 +27,23 @@ class BotManager:
         self.is_trading = False
         self.is_paused = False  # 暫停補倉狀態
         self._config: Optional[GlobalConfig] = None
-        
+
+        # ═══════════════════════════════════════════════════════════════════
+        # 【交易時 UID 驗證】白名單狀態
+        # ═══════════════════════════════════════════════════════════════════
+        self._whitelist_blocked = False  # 是否被白名單阻止
+        self._whitelist_warning = False  # 是否在警告期
+        self._whitelist_check_task: Optional[asyncio.Task] = None
+
+        # ═══════════════════════════════════════════════════════════════════
+        # 【P1: Node 離線處理】連線狀態追蹤
+        # ═══════════════════════════════════════════════════════════════════
+        self._server_connected = True  # 與 Auth Server 的連線狀態
+        self._exchange_connected = True  # 與交易所的連線狀態
+        self._reconnect_attempts = 0  # 重連嘗試次數
+        self._max_reconnect_attempts = 10  # 最大重連次數
+        self._last_error_time: Optional[float] = None
+
         # 初始化 AuthClient（如果配置了官方伺服器）
         self._init_auth_client()
     
@@ -79,11 +95,213 @@ class BotManager:
                 
                 # 啟動心跳
                 await self.auth_client.start_heartbeat()
+
+                # ═══════════════════════════════════════════════════════════════
+                # 【交易時 UID 驗證】啟動定期白名單檢查
+                # ═══════════════════════════════════════════════════════════════
+                await self._start_whitelist_check()
+
             else:
                 result["message"] = "Failed to connect, running standalone"
-        
+
         return result
-    
+
+    async def _start_whitelist_check(self):
+        """啟動定期白名單檢查 (每 5 分鐘)"""
+        if self._whitelist_check_task:
+            return
+
+        async def check_loop():
+            while True:
+                try:
+                    if self.auth_client:
+                        is_valid = await self.auth_client.check_whitelist()
+
+                        if not is_valid:
+                            if not self._whitelist_blocked:
+                                logger.error("⛔ WHITELIST BLOCKED: Trading will be stopped!")
+                                self._whitelist_blocked = True
+
+                                # 如果正在交易，停止交易
+                                if self.is_trading:
+                                    logger.warning("Stopping trading due to whitelist block...")
+                                    await self.stop()
+                        else:
+                            self._whitelist_blocked = False
+
+                except Exception as e:
+                    logger.error(f"Whitelist check loop error: {e}")
+
+                await asyncio.sleep(300)  # 5 分鐘檢查一次
+
+        self._whitelist_check_task = asyncio.create_task(check_loop())
+        logger.info("Whitelist check loop started (interval: 5 min)")
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # 【P1: Node 離線處理】離線處理方法
+    # ═══════════════════════════════════════════════════════════════════════
+
+    def _calculate_backoff(self) -> float:
+        """
+        計算指數退避時間
+
+        Returns:
+            等待時間（秒）：1, 2, 4, 8, 16, 30 (最大)
+        """
+        base = 1
+        max_wait = 30
+        wait = min(base * (2 ** self._reconnect_attempts), max_wait)
+        return wait
+
+    async def _handle_server_disconnect(self):
+        """
+        處理與 Auth Server 斷線
+
+        策略：寬容模式 - 繼續交易，使用快取的白名單狀態
+        """
+        if self._server_connected:
+            self._server_connected = False
+            logger.warning(
+                "⚠️ AUTH SERVER DISCONNECTED: Running in tolerance mode. "
+                "Trading will continue with cached whitelist status."
+            )
+
+        # 不中斷交易，繼續運行
+
+    async def _handle_server_reconnect(self):
+        """處理與 Auth Server 重新連線"""
+        if not self._server_connected:
+            self._server_connected = True
+            self._reconnect_attempts = 0
+            logger.info("✅ AUTH SERVER RECONNECTED: Back to normal mode.")
+
+            # 強制刷新白名單狀態
+            if self.auth_client:
+                await self.auth_client.check_whitelist(force=True)
+
+    async def _handle_exchange_disconnect(self):
+        """
+        處理與交易所斷線
+
+        策略：
+        1. 自動重連（指數退避）
+        2. 3 次失敗後暫停新開倉
+        3. 10 次失敗後發送告警
+        4. 保留現有倉位（不平倉）
+        """
+        self._exchange_connected = False
+        self._reconnect_attempts += 1
+
+        wait_time = self._calculate_backoff()
+        logger.warning(
+            f"⚠️ EXCHANGE DISCONNECTED: Attempt {self._reconnect_attempts}/{self._max_reconnect_attempts}. "
+            f"Waiting {wait_time}s before retry..."
+        )
+
+        # 3 次失敗後暫停新開倉
+        if self._reconnect_attempts >= 3 and not self.is_paused:
+            logger.warning("Pausing new positions due to connection issues...")
+            self.is_paused = True
+            if self.bot and hasattr(self.bot, 'set_pause'):
+                self.bot.set_pause(True)
+
+        # 10 次失敗後發送告警
+        if self._reconnect_attempts >= self._max_reconnect_attempts:
+            logger.error(
+                f"🚨 CRITICAL: Exchange reconnection failed after {self._max_reconnect_attempts} attempts! "
+                "Manual intervention may be required."
+            )
+            # TODO: 發送通知到 Server / 用戶
+
+        await asyncio.sleep(wait_time)
+
+    async def _handle_exchange_reconnect(self):
+        """處理與交易所重新連線"""
+        if not self._exchange_connected:
+            self._exchange_connected = True
+            self._reconnect_attempts = 0
+            logger.info("✅ EXCHANGE RECONNECTED: Connection restored.")
+
+            # 如果之前因為斷線而暫停，恢復交易
+            if self.is_paused and self._reconnect_attempts == 0:
+                logger.info("Resuming trading after reconnection...")
+                self.is_paused = False
+                if self.bot and hasattr(self.bot, 'set_pause'):
+                    self.bot.set_pause(False)
+
+    async def recover_state_on_restart(self) -> Dict[str, Any]:
+        """
+        Node 重啟後恢復狀態
+
+        步驟：
+        1. 從交易所讀取現有倉位
+        2. 比對本地 config 的交易對
+        3. 恢復交易狀態
+        """
+        result = {
+            "recovered": False,
+            "positions": [],
+            "message": ""
+        }
+
+        try:
+            import ccxt
+
+            api_key = os.getenv("EXCHANGE_API_KEY", "")
+            api_secret = os.getenv("EXCHANGE_SECRET", "")
+            passphrase = os.getenv("EXCHANGE_PASSPHRASE", "")
+
+            if not api_key or not api_secret:
+                result["message"] = "No API credentials configured"
+                return result
+
+            exchange = ccxt.bitget({
+                'apiKey': api_key,
+                'secret': api_secret,
+                'password': passphrase,
+                'enableRateLimit': True,
+                'options': {'defaultType': 'swap'}
+            })
+
+            # 獲取所有持倉
+            positions = exchange.fetch_positions()
+            active_positions = []
+
+            for pos in positions:
+                if pos.get('contracts', 0) > 0 or pos.get('contractSize', 0) > 0:
+                    active_positions.append({
+                        "symbol": pos.get('symbol'),
+                        "side": pos.get('side'),
+                        "contracts": pos.get('contracts', 0),
+                        "unrealizedPnl": pos.get('unrealizedPnl', 0)
+                    })
+
+            result["positions"] = active_positions
+            result["recovered"] = True
+            result["message"] = f"Found {len(active_positions)} active positions"
+
+            if active_positions:
+                logger.info(f"Recovered {len(active_positions)} positions on restart:")
+                for p in active_positions:
+                    logger.info(f"  - {p['symbol']} {p['side']}: {p['contracts']} contracts")
+
+        except Exception as e:
+            logger.error(f"Failed to recover state: {e}")
+            result["message"] = str(e)
+
+        return result
+
+    def get_connection_status(self) -> Dict[str, Any]:
+        """獲取連線狀態"""
+        return {
+            "server_connected": self._server_connected,
+            "exchange_connected": self._exchange_connected,
+            "reconnect_attempts": self._reconnect_attempts,
+            "is_trading": self.is_trading,
+            "is_paused": self.is_paused,
+            "whitelist_blocked": self._whitelist_blocked
+        }
+
     def _fetch_actual_uid(self) -> Optional[str]:
         """
         從交易所 API 獲取當前 API Key 的實際 UID
@@ -327,8 +545,21 @@ class BotManager:
         
         return indicators
 
-    def start(self, symbol: str, quantity: float) -> Dict[str, str]:
+    async def start(self, symbol: str, quantity: float) -> Dict[str, str]:
         """啟動交易"""
+        # ═══════════════════════════════════════════════════════════════════
+        # 【交易時 UID 驗證】啟動前檢查白名單
+        # ═══════════════════════════════════════════════════════════════════
+        if self._whitelist_blocked:
+            logger.error("Cannot start trading: blocked by whitelist")
+            raise ValueError("Trading blocked: Your account is not in the whitelist. Please contact support.")
+
+        if self.auth_client:
+            is_valid = await self.auth_client.check_whitelist()
+            if not is_valid:
+                logger.error("Cannot start trading: whitelist check failed")
+                raise ValueError("Trading blocked: Whitelist verification failed. Please contact support.")
+
         if self.bot and self.bot.state.running:
             raise ValueError("Bot is already running")
 
@@ -507,6 +738,16 @@ class BotManager:
     async def shutdown(self):
         """關閉 Node"""
         await self.stop()
+
+        # 停止白名單檢查
+        if self._whitelist_check_task:
+            self._whitelist_check_task.cancel()
+            try:
+                await self._whitelist_check_task
+            except asyncio.CancelledError:
+                pass
+            self._whitelist_check_task = None
+
         if self.auth_client:
             await self.auth_client.close()
         logger.info("BotManager shutdown complete")

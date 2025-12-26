@@ -8,6 +8,7 @@ import hashlib
 import base64
 import ssl
 import certifi
+import websockets
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 import ccxt.async_support as ccxt_async
@@ -658,7 +659,7 @@ class MaxGridBot:
         ssl_context = ssl.create_default_context(cafile=certifi.where())
         while not self._stop_event.is_set():
             try:
-                async with ccxt_async.websockets.connect(self.config.websocket_url, ssl=ssl_context) as ws:
+                async with websockets.connect(self.config.websocket_url, ssl=ssl_context) as ws:
                     self.state.connected = True
                     logger.info("[Bitget WS] 公共 WebSocket 已連接")
                     
@@ -696,7 +697,7 @@ class MaxGridBot:
         ssl_context = ssl.create_default_context(cafile=certifi.where())
         while not self._stop_event.is_set():
             try:
-                async with ccxt_async.websockets.connect(self.config.private_ws_url, ssl=ssl_context) as ws:
+                async with websockets.connect(self.config.private_ws_url, ssl=ssl_context) as ws:
                     logger.info("[Bitget WS] 私有 WebSocket 已連接")
                     auth_args = self._generate_ws_signature()
                     await ws.send(json.dumps({"op": "login", "args": [auth_args]}))

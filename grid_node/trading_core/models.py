@@ -385,6 +385,8 @@ class SymbolState:
     best_ask: float = 0
     long_position: float = 0
     short_position: float = 0
+    long_avg_price: float = 0  # 做多均價
+    short_avg_price: float = 0  # 做空均價
     unrealized_pnl: float = 0
     buy_long_orders: float = 0
     sell_long_orders: float = 0

@@ -108,14 +108,19 @@ async def scan_all_symbols(req: ScanRequest):
         scanner = SymbolScanner()
         
         # 獲取 USDC 和 USDT 合約
-        usdc_results = await scanner.scan_usdc_symbols(exchange)
-        usdt_results = await scanner.scan_usdt_symbols(exchange)
+        usdc_results = await scanner.scan_with_amplitude(
+            exchange, quote_currency='USDC', top_n=req.limit, use_cache=not req.force_refresh
+        )
+        usdt_results = await scanner.scan_with_amplitude(
+            exchange, quote_currency='USDT', top_n=req.limit, use_cache=not req.force_refresh
+        )
         
         # 合併結果
         all_candidates = usdc_results + usdt_results
         
-        # 按振幅排序，取前 N 個
-        all_candidates.sort(key=lambda x: x[1], reverse=True)
+        # scan_with_amplitude 已經按 grid_suitability 排序，取前 N 個
+        # 結構: [(SymbolInfo, AmplitudeStats), ...]
+        all_candidates.sort(key=lambda x: x[1].grid_suitability if x[1] else 0, reverse=True)
         candidates = all_candidates[:req.limit]
         
         if not candidates:
@@ -125,32 +130,21 @@ async def scan_all_symbols(req: ScanRequest):
                 message="No suitable symbols found"
             )
         
-        # 評分
-        scorer = CoinScorer()
-        ranker = CoinRanker(scorer)
-        
-        symbols = [sym.ccxt_symbol for sym, _ in candidates]
-        rankings = await ranker.get_rankings(
-            symbols, 
-            exchange, 
-            force_refresh=req.force_refresh
-        )
-        
-        # 轉換為響應格式
+        # 直接從 AmplitudeStats 建立排名結果
         result_rankings = []
-        for i, rank in enumerate(rankings):
-            amp_stats = getattr(rank, '_amplitude_stats', None)
-            result_rankings.append(SymbolRanking(
-                symbol=rank.symbol,
-                rank=i + 1,
-                total_score=rank.score.final_score,
-                amplitude=amp_stats.avg_amplitude if amp_stats else 0,
-                trend=amp_stats.total_change if amp_stats else 0,
-                volume_24h=amp_stats.volume_24h if amp_stats else rank.score.volume_24h,
-                price=amp_stats.last_price if amp_stats else 0,
-                grid_suitability=amp_stats.grid_suitability if amp_stats else 0,
-                action=rank.action.value if hasattr(rank.action, 'value') else str(rank.action)
-            ))
+        for i, (sym_info, amp_stats) in enumerate(candidates):
+            if amp_stats:
+                result_rankings.append(SymbolRanking(
+                    symbol=sym_info.ccxt_symbol,
+                    rank=i + 1,
+                    total_score=amp_stats.grid_suitability,
+                    amplitude=amp_stats.avg_amplitude,
+                    trend=amp_stats.total_change,
+                    volume_24h=amp_stats.volume_24h,
+                    price=amp_stats.last_price,
+                    grid_suitability=amp_stats.grid_suitability,
+                    action="WATCH" if amp_stats.grid_suitability >= 60 else "AVOID"
+                ))
         
         elapsed = time.time() - start_time
         

@@ -6,6 +6,7 @@ on:
     paths:
       - 'grid_node/**'
       - 'trading_core/**'
+      - 'coin_selection/**'
       - 'asBack/**'
       - '.github/workflows/docker-grid-node.yml'
   workflow_dispatch:

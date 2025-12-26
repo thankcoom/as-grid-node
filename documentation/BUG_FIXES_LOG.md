@@ -4,6 +4,52 @@
 
 ---
 
+## 2025-12-26 修復紀錄
+
+### 1. WebSocket 連接失敗
+
+**問題**：`module 'ccxt.async_support' has no attribute 'websockets'`
+
+**原因**：新版 ccxt 已移除 `websockets` 子模組，需使用原生 `websockets` 庫
+
+**修復**：
+
+| 檔案 | 修復內容 |
+|-----|---------|
+| [bot.py](file:///Users/liutsungying/as網格/bitget_as/trading_core/bot.py) | 新增 `import websockets` |
+| [bot.py](file:///Users/liutsungying/as網格/bitget_as/trading_core/bot.py) | 將 `ccxt_async.websockets.connect` 改為 `websockets.connect` |
+
+---
+
+### 2. SymbolState 缺少均價屬性
+
+**問題**：`'SymbolState' object has no attribute 'long_avg_price'`
+
+**原因**：`SymbolState` 類別未定義 `long_avg_price` 和 `short_avg_price` 屬性，但 `bot_manager.py` 心跳回報時需要使用
+
+**修復**：
+
+| 檔案 | 修復內容 |
+|-----|---------|
+| [models.py](file:///Users/liutsungying/as網格/bitget_as/trading_core/models.py) | 新增 `long_avg_price: float = 0` |
+| [models.py](file:///Users/liutsungying/as網格/bitget_as/trading_core/models.py) | 新增 `short_avg_price: float = 0` |
+
+---
+
+### 3. 選幣 API 方法不存在
+
+**問題**：`'SymbolScanner' object has no attribute 'scan_usdc_symbols'`
+
+**原因**：`SymbolScanner` 實際使用 `scan_with_amplitude` 方法，而非 `scan_usdc_symbols`
+
+**修復**：
+
+| 檔案 | 修復內容 |
+|-----|---------|
+| [coin.py](file:///Users/liutsungying/as網格/bitget_as/grid_node/app/api/coin.py) | 改用 `scan_with_amplitude(exchange, quote_currency='USDC')` |
+
+---
+
 ## 2025-12-18 修復紀錄
 
 ### 1. BotManager 使用錯誤的用戶識別碼參數
